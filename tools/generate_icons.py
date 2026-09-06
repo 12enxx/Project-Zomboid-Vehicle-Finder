@@ -13,7 +13,7 @@ import os
 from PIL import Image, ImageDraw
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEX = os.path.join(ROOT, "Contents", "mods", "VehicleFinder",
+TEX = os.path.join(ROOT, "Contents", "mods", "VehicleFinder", "42",
                    "media", "textures")
 
 # ---------------------------------------------------------------- palette ---
@@ -109,11 +109,11 @@ def main():
     save(car, "VehicleFinder_Car.png")
 
     art = poster(car)
-    mod_dir = os.path.join(ROOT, "Contents", "mods", "VehicleFinder")
+    mod_dir = os.path.join(ROOT, "Contents", "mods", "VehicleFinder", "42")
     os.makedirs(mod_dir, exist_ok=True)
     art.convert("RGB").save(os.path.join(mod_dir, "poster.png"))
     art.convert("RGB").save(os.path.join(ROOT, "preview.png"))
-    print("wrote Contents/mods/VehicleFinder/poster.png")
+    print("wrote " + os.path.relpath(os.path.join(mod_dir, "poster.png"), ROOT))
     print("wrote preview.png")
 
     # 8x zoom, for eyeballing the pixels while iterating.

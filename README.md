@@ -69,36 +69,44 @@ Windows : %USERPROFILE%\Zomboid\mods\VehicleFinder\
 Linux   : ~/Zomboid/mods/VehicleFinder/
 ```
 
-Setelah dicopy, susunannya harus persis begini (cek `mod.info` ada di level
-paling atas folder `VehicleFinder`, bukan di dalam folder lain lagi):
+Susunannya harus persis begini — ini struktur mod Build 42, beda dari Build 41:
 
 ```
 Zomboid/mods/VehicleFinder/
-    mod.info                 <- harus ada di sini
-    poster.png
-    media/
-        lua/client/VehicleFinder/*.lua
-        lua/shared/Translate/EN/IG_UI_EN.txt
-        textures/VehicleFinder_Car.png
+    common/                  <- harus ada, isinya memang kosong
+    42/
+        mod.info             <- di dalam folder 42, bukan di root
+        poster.png
+        media/
+            lua/client/VehicleFinder/*.lua
+            lua/shared/Translate/EN/IG_UI_EN.txt
+            textures/VehicleFinder_Car.png
 ```
+
+Dua hal yang bikin mod nggak kelihatan di menu Mods walau foldernya sudah benar:
+
+1. `mod.info` ditaruh di root folder mod (gaya Build 41) — di B42 dia harus di
+   dalam folder versi `42/`.
+2. Folder `common/` nggak ada — B42 nge-skip mod-nya diam-diam, tanpa error di
+   `console.txt`.
 
 Terus aktifin lewat menu **Mods** di dalam game.
 
-### Kalau mod-nya nggak muncul di menu Mods
+### Kalau mod-nya masih nggak muncul di menu Mods
 
-Hampir selalu gara-gara folder-nya kelewat satu tingkat. Yang paling sering:
+Penyebab paling sering sisanya: folder kelewat satu tingkat.
 
 | Salah | Kenapa |
 | --- | --- |
 | `Zomboid\mods\Project-Zomboid-Vehicle-Finder-...\Contents\mods\VehicleFinder\` | folder repo/ZIP ikut kecopy |
 | `Zomboid\mods\Contents\mods\VehicleFinder\` | folder `Contents` ikut kecopy |
 | `Zomboid\mods\VehicleFinder\VehicleFinder\` | Windows bikin folder dobel waktu extract |
-| `Zomboid\Workshop\...` | itu folder buat mod Workshop, bukan mod lokal |
+| `Zomboid\Workshop\...` | itu folder buat upload Workshop, bukan mod lokal |
 
-Patokannya satu: **`...\Zomboid\mods\VehicleFinder\mod.info` harus ada.**
-Kalau path itu benar tapi tetap nggak kebaca, buka
-`%USERPROFILE%\Zomboid\console.txt` dan cari baris yang menyebut `mod.info`
-atau `VehicleFinder`.
+Patokannya: **`...\Zomboid\mods\VehicleFinder\42\mod.info` harus ada.**
+Kalau path itu benar tapi tetap nggak kebaca, coba hapus
+`Zomboid\mods\reset-mods-42_00.txt` (file itu nyimpen daftar mod aktif dan
+kadang nyangkut), terus cek `%USERPROFILE%\Zomboid\console.txt`.
 
 Setting UI (posisi/ukuran tombol, geometry jendela) disimpan di
 `Zomboid/VehicleFinder_settings.ini`, bukan di save game - jadi nggak ngefek ke
@@ -108,18 +116,20 @@ multiplayer dan nggak nyampur sama ModData mod lain.
 
 ```
 Contents/mods/VehicleFinder/
-  mod.info
-  poster.png
-  media/
-    lua/client/VehicleFinder/
-      VehicleFinder_01_Core.lua      namespace, settings, helper, cari posisi kosong
-      VehicleFinder_02_Vehicles.lua  scan kendaraan (aman buat kendaraan mod)
-      VehicleFinder_03_Icon.lua      loader texture + gambar fallback
-      VehicleFinder_04_Button.lua    tombol melayang (drag, klik, klik kanan)
-      VehicleFinder_05_Window.lua    jendela utama (search, list, tracking)
-      VehicleFinder_06_Main.lua      keybinding + event, satu-satunya entry point
-    lua/shared/Translate/EN/IG_UI_EN.txt
-    textures/VehicleFinder_Car.png
+  common/                            wajib ada buat B42, sengaja kosong
+  42/
+    mod.info
+    poster.png
+    media/
+      lua/client/VehicleFinder/
+        VehicleFinder_01_Core.lua      namespace, settings, helper, cari posisi kosong
+        VehicleFinder_02_Vehicles.lua  scan kendaraan (aman buat kendaraan mod)
+        VehicleFinder_03_Icon.lua      loader texture + gambar fallback
+        VehicleFinder_04_Button.lua    tombol melayang (drag, klik, klik kanan)
+        VehicleFinder_05_Window.lua    jendela utama (search, list, tracking)
+        VehicleFinder_06_Main.lua      keybinding + event, satu-satunya entry point
+      lua/shared/Translate/EN/IG_UI_EN.txt
+      textures/VehicleFinder_Car.png
 tests/                               stub API PZ + test
 tools/                               generator ikon + runner test
 ```

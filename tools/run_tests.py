@@ -19,7 +19,7 @@ except ImportError:  # pragma: no cover - depends on the lupa build
     import lupa as lua
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MOD_LUA = os.path.join(ROOT, "Contents", "mods", "VehicleFinder",
+MOD_LUA = os.path.join(ROOT, "Contents", "mods", "VehicleFinder", "42",
                        "media", "lua")
 
 
