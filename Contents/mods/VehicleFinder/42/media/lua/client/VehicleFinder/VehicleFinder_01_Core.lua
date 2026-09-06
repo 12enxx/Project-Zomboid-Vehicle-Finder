@@ -168,6 +168,49 @@ function VF.worldToScreenDir(dx, dy)
     return sx / len, sy / len
 end
 
+-- ---------------------------------------------- java collections (B42) ---
+
+--- Copies a Java collection into a Lua array, whatever its concrete type.
+---
+--- IsoCell:getVehicles() returns an ArrayList up to 42.16 and a Set from
+--- 42.17 on. A Set has no get(i), so indexing it throws - and Kahlua prints
+--- the whole stack trace to console.txt even when the call is wrapped in
+--- pcall. So the access pattern is chosen by looking at the object, never by
+--- letting a call fail.
+function VF.toTable(collection)
+    local out = {}
+    if not collection then return out end
+
+    -- both ArrayList and Set expose iterator(), so try it first
+    if collection.iterator then
+        local ok, items = pcall(function()
+            local list, iterator = {}, collection:iterator()
+            while iterator:hasNext() do
+                local value = iterator:next()
+                if value then list[#list + 1] = value end
+            end
+            return list
+        end)
+        if ok and items then return items end
+    end
+
+    -- indexed access (Build 41 and Build 42 up to 42.16)
+    if collection.size and collection.get then
+        local ok, items = pcall(function()
+            local list = {}
+            for i = 0, collection:size() - 1 do
+                local value = collection:get(i)
+                if value then list[#list + 1] = value end
+            end
+            return list
+        end)
+        if ok and items then return items end
+    end
+
+    VF.warn("this build returns a vehicle collection we cannot iterate")
+    return out
+end
+
 -- --------------------------------------------------- placement (no-clash) ---
 
 --- True when the rectangle does not overlap any other visible UI element.

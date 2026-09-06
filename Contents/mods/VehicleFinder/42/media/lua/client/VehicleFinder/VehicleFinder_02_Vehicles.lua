@@ -126,14 +126,10 @@ function VF.scanVehicles()
     VF.safe(function()
         local cell = getCell()
         if not cell or not cell.getVehicles then return end
-        local list = cell:getVehicles()
-        if not list then return end
-        for i = 0, list:size() - 1 do
-            local vehicle = list:get(i)
-            if vehicle then
-                local entry = VF.describe(vehicle, px, py)
-                if entry then table.insert(result, entry) end
-            end
+        local vehicles = VF.toTable(cell:getVehicles())
+        for i = 1, #vehicles do
+            local entry = VF.describe(vehicles[i], px, py)
+            if entry then table.insert(result, entry) end
         end
     end)
 

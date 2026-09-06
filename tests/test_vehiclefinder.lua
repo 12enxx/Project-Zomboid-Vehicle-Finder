@@ -73,6 +73,13 @@ Stub.vehicles = {
     Stub.makeVehicle(2, "Base.PickUpTruck", 100, 80),
     Stub.makeVehicle(3, "AwesomeCarMod.SuperTruck", 160, 160),
 }
+-- the collection type changed in 42.17 (ArrayList -> Set); both must work
+for _, style in ipairs({ "set", "list" }) do
+    Stub.vehicleCollection = style
+    local found = VF.scanVehicles()
+    check("vehicles read from a " .. style .. " collection", #found == 3, #found)
+end
+Stub.vehicleCollection = "set"
 local entries = VF.scanVehicles()
 check("all vehicles found", #entries == 3, #entries)
 check("sorted by distance", entries[1].dist < entries[2].dist and entries[2].dist < entries[3].dist)

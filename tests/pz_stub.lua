@@ -125,6 +125,7 @@ function Stub.makeVehicle(id, fullName, x, y, color)
     return v
 end
 
+-- ArrayList: Build 41 and Build 42 up to 42.16
 local function javaList(items)
     return {
         size = function() return #items end,
@@ -132,11 +133,40 @@ local function javaList(items)
     }
 end
 
+-- Set: what IsoCell:getVehicles() returns from 42.17 on. No get(i) at all -
+-- indexing it is exactly what crashed the mod in 42.20.4.
+local function javaSet(items)
+    return {
+        size = function() return #items end,
+        isEmpty = function() return #items == 0 end,
+        iterator = function()
+            local index = 0
+            return {
+                hasNext = function() return index < #items end,
+                next = function()
+                    index = index + 1
+                    return items[index]
+                end,
+            }
+        end,
+    }
+end
+
 Stub.vehicles = {}
 Stub.player = nil
 
+-- "set" mirrors 42.17+, "list" mirrors 42.16 and Build 41
+Stub.vehicleCollection = "set"
+
 function getCell()
-    return { getVehicles = function() return javaList(Stub.vehicles) end }
+    return {
+        getVehicles = function()
+            if Stub.vehicleCollection == "list" then
+                return javaList(Stub.vehicles)
+            end
+            return javaSet(Stub.vehicles)
+        end,
+    }
 end
 
 function getSpecificPlayer(index)
