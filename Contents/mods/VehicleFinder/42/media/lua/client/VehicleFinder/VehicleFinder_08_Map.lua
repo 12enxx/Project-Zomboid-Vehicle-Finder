@@ -7,9 +7,12 @@
     the dots itself. Nothing in the vanilla map UI is hooked or replaced; the
     only thing borrowed from it is the world-to-screen conversion.
 
-    Whether that conversion is worldToUIX(x, y) or worldToUIX(x) differs
-    between builds, so the right one is worked out once, at the first map
-    open, and the result is logged.
+    Marking vehicles needs something to write with, exactly like drawing on
+    the map by hand does: the dots only appear while the player carries a pen
+    or a pencil, and they are drawn in that pen's colour.
+
+    The poll runs on OnRenderTick, not OnTick: opening the map pauses the game
+    in single player, and a paused game stops ticking.
 ]]
 
 VehicleFinder = VehicleFinder or {}
@@ -23,16 +26,36 @@ local REFRESH_MS = 1000    -- how often the dot list is rebuilt
 
 -- ------------------------------------------------------------ projection ---
 
---- The open world map UI, or nil.
+--- The open world map UI, or nil. ShowWorldMap keeps the singleton in the
+--- global ISWorldMap_instance; ISWorldMap.instance is set later, from the
+--- map's own prerender, so both are worth looking at.
 function M.getMapUI()
     local ui
     VF.safe(function()
-        if ISWorldMap and ISWorldMap.instance and ISWorldMap.instance.getIsVisible
-            and ISWorldMap.instance:getIsVisible() then
-            ui = ISWorldMap.instance
+        local candidate = ISWorldMap_instance
+        if not candidate and ISWorldMap then candidate = ISWorldMap.instance end
+        if candidate and candidate.getIsVisible and candidate:getIsVisible()
+            and candidate.mapAPI then
+            ui = candidate
         end
     end)
     return ui
+end
+
+--- Centres the open (or about to open) world map on a vehicle.
+function VF.showOnMap(entry)
+    if not entry or type(entry.x) ~= "number" then return false end
+    local shown = false
+    VF.safe(function()
+        if not ISWorldMap or not ISWorldMap.ShowWorldMap then return end
+        if ISWorldMap.IsAllowed and not ISWorldMap.IsAllowed() then return end
+        ISWorldMap.ShowWorldMap(0, entry.x, entry.y, 50)
+        shown = true
+    end)
+    if not shown then
+        VF.warn("could not open the world map on this build")
+    end
+    return shown
 end
 
 --- Builds world -> map-pixel conversion for this build, once.
@@ -94,14 +117,14 @@ function M.buildClass()
         local x, y = px - half, py - half
         if x < -size or y < -size or x > self.width or y > self.height then return end
 
+        local tool = M.tool or { r = 0.78, g = 0.12, b = 0.12 }
         if entry.remembered then
+            -- outline only: drawn from the log, not seen right now
             self:drawRectBorder(x - 1, y - 1, size + 2, size + 2, 0.85, 0.05, 0.05, 0.05)
-            self:drawRectBorder(x, y, size, size, 0.95, 0.78, 0.78, 0.70)
+            self:drawRectBorder(x, y, size, size, 0.95, tool.r, tool.g, tool.b)
         else
-            local r, g, b = entry.r, entry.g, entry.b
-            if not r then r, g, b = 0.85, 0.32, 0.26 end
             self:drawRect(x - 1, y - 1, size + 2, size + 2, 0.85, 0.05, 0.05, 0.05)
-            self:drawRect(x, y, size, size, 1, r, g, b)
+            self:drawRect(x, y, size, size, 1, tool.r, tool.g, tool.b)
         end
 
         if tracked then
@@ -165,6 +188,14 @@ function M.onTick()
         return
     end
 
+    -- no pen, no marks: same rule the vanilla map annotations follow
+    local tool = VF.writingTool()
+    if not tool then
+        M.destroy()
+        return
+    end
+    M.tool = tool
+
     local mapUI = M.getMapUI()
     if not mapUI then
         M.destroy()
@@ -199,5 +230,8 @@ end
 
 if not M.tickBound then
     M.tickBound = true
-    VF.addEvent("OnTick", M.onTick)
+    -- the world map pauses the game, so OnTick stops firing while it is open
+    if not VF.addEvent("OnRenderTick", M.onTick) then
+        VF.addEvent("OnTick", M.onTick)
+    end
 end

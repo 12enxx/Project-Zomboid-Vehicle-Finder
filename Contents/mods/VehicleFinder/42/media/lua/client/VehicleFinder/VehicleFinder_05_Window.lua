@@ -33,7 +33,7 @@ function VF.buildWindowClass()
         o.title = VF.text("IGUI_VehicleFinder_Title", "Vehicle Finder")
         o.resizable = true
         o.drawFrame = true
-        o.minimumWidth = 280
+        o.minimumWidth = 340       -- below this the two toggles start to collide
         o.minimumHeight = 220
         o.entries = {}
         o.searchText = ""
@@ -86,6 +86,12 @@ function VF.buildWindowClass()
             self.list.target = self
             self.list.onmousedown = Window.onRowClicked
         end
+        if self.list.setOnMouseDoubleClick then
+            self.list:setOnMouseDoubleClick(self, Window.onRowDoubleClicked)
+        else
+            self.list.target = self
+            self.list.onmousedblclick = Window.onRowDoubleClicked
+        end
         self:addChild(self.list)
 
         self.clearButton = ISButton:new(self.width - PAD - 96,
@@ -97,6 +103,7 @@ function VF.buildWindowClass()
         self.clearButton.borderColor = { r = 0.4, g = 0.4, b = 0.4, a = 1 }
         self:addChild(self.clearButton)
 
+        self:layout()
         self:refreshToggles()
         self:refreshList()
     end
@@ -125,17 +132,42 @@ function VF.buildWindowClass()
     end
 
     --- Toggle labels always show the state they are currently in.
+    --- Long label when it fits the button, short one when it does not.
+    local function fitTitle(button, long, short)
+        if not button then return long end
+        local ok, fits = VF.safe(function()
+            return getTextManager():MeasureStringX(UIFont.Small, long) + 12
+                <= button:getWidth()
+        end)
+        if ok and fits == false then return short end
+        return long
+    end
+
     function Window:refreshToggles()
         if self.rangeButton then
-            local title = VF.config.searchAll
-                and VF.text("IGUI_VehicleFinder_RangeAll", "Range: all known")
-                or VF.text("IGUI_VehicleFinder_RangeNear", "Range: nearby")
+            local title
+            if VF.config.searchAll then
+                title = fitTitle(self.rangeButton,
+                    VF.text("IGUI_VehicleFinder_RangeAll", "Range: all known"),
+                    VF.text("IGUI_VehicleFinder_RangeAllShort", "All known"))
+            else
+                title = fitTitle(self.rangeButton,
+                    VF.text("IGUI_VehicleFinder_RangeNear", "Range: nearby"),
+                    VF.text("IGUI_VehicleFinder_RangeNearShort", "Nearby"))
+            end
             VF.safe(function() self.rangeButton:setTitle(title) end)
         end
         if self.burntButton then
-            local title = VF.showBurnt()
-                and VF.text("IGUI_VehicleFinder_BurntShown", "Burnt: shown")
-                or VF.text("IGUI_VehicleFinder_BurntHiddenBtn", "Burnt: hidden")
+            local title
+            if VF.showBurnt() then
+                title = fitTitle(self.burntButton,
+                    VF.text("IGUI_VehicleFinder_BurntShown", "Burnt: shown"),
+                    VF.text("IGUI_VehicleFinder_BurntShownShort", "Burnt: on"))
+            else
+                title = fitTitle(self.burntButton,
+                    VF.text("IGUI_VehicleFinder_BurntHiddenBtn", "Burnt: hidden"),
+                    VF.text("IGUI_VehicleFinder_BurntHiddenShort", "Burnt: off"))
+            end
             VF.safe(function() self.burntButton:setTitle(title) end)
         end
     end
@@ -143,12 +175,14 @@ function VF.buildWindowClass()
     function Window:onToggleRange()
         VF.config.searchAll = not VF.config.searchAll
         VF.saveConfig()
+        self:layout()
         self:refreshToggles()
         self:refreshList()
     end
 
     function Window:onToggleBurnt()
         VF.setShowBurnt(not VF.showBurnt())
+        self:layout()
         self:refreshToggles()
         self:refreshList()
     end
@@ -194,6 +228,13 @@ function VF.buildWindowClass()
     function Window:onRowClicked(item)
         if not item then return end
         VF.setTracked(item)
+    end
+
+    --- Double click: track it and open the world map centred on it.
+    function Window:onRowDoubleClicked(item)
+        if not item then return end
+        VF.setTracked(item)
+        VF.showOnMap(item)
     end
 
     function Window:onClearTarget()
@@ -291,6 +332,9 @@ function VF.buildWindowClass()
         if not VF.showBurnt() then
             label = label .. " - " .. VF.text("IGUI_VehicleFinder_BurntHidden", "burnt hidden")
         end
+        if VF.config.mapMarkers and not VF.writingTool() then
+            label = label .. " - " .. VF.text("IGUI_VehicleFinder_NeedPen", "map dots need a pen")
+        end
         self:drawText(label, PAD, y, 0.75, 0.78, 0.72, 1, font)
 
         if VF.trackedInfo then
@@ -318,6 +362,7 @@ function VF.buildWindowClass()
         if self.width ~= self.lastWidth or self.height ~= self.lastHeight then
             self.lastWidth, self.lastHeight = self.width, self.height
             self:layout()
+            self:refreshToggles()
             self.geometryDirty = true
         end
 

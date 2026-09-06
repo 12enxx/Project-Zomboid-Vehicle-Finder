@@ -308,12 +308,13 @@ VF.history.reset()
 noWarnings("history")
 
 print("burnt toggle inside the window")
+local win
 Stub.vehicles = {
     Stub.makeVehicle(1, "Base.CarNormal", 110, 100),
     Stub.makeVehicle(9, "Base.SmallCar02Burnt", 105, 100),
 }
 VF.openWindow()
-local win = VF.window
+win = VF.window
 Stub.time = Stub.time + 1000
 win:update()
 check("both listed to start with", win.list:size() == 2, win.list:size())
@@ -351,7 +352,31 @@ Stub.time = Stub.time + 1000
 win:update()
 noWarnings("toggles")
 
+print("toggles are laid out the moment the window opens")
+VF.closeWindow()
+VF.config.windowW, VF.config.windowH = 360, 400
+VF.openWindow()
+local fresh = VF.window
+check("range button is sized without waiting for a resize",
+      fresh.rangeButton:getWidth() > 100, fresh.rangeButton:getWidth())
+check("the two toggles do not overlap",
+      fresh.burntButton:getX() >= fresh.rangeButton:getX() + fresh.rangeButton:getWidth(),
+      fresh.rangeButton:getX() .. "+" .. fresh.rangeButton:getWidth()
+      .. " vs " .. fresh.burntButton:getX())
+check("both toggles stay inside the window",
+      fresh.burntButton:getX() + fresh.burntButton:getWidth() <= fresh.width - 8)
+check("long labels fit at the minimum width",
+      fresh.rangeButton.title == "Range: nearby", fresh.rangeButton.title)
+fresh:setWidth(200)          -- narrower than the mod allows, but be safe anyway
+fresh:update()
+check("labels shorten when there is no room",
+      fresh.rangeButton.title == "Nearby", fresh.rangeButton.title)
+fresh:setWidth(360)
+fresh:update()
+noWarnings("toggle layout")
+
 print("window resize + geometry persistence")
+window = VF.window          -- the sections above reopened it
 window:setWidth(500)
 window:setHeight(600)
 window:update()
@@ -377,10 +402,19 @@ VF.map.onTick()
 check("no overlay while the map is closed", VF.map.overlay == nil)
 
 Stub.openMap(0, 0, 800, 600)
+Stub.inventory = {}
+Stub.time = Stub.time + 1000
+VF.map.lastRefresh = 0
+VF.map.onTick()
+check("no dots without something to write with", VF.map.overlay == nil)
+
+Stub.inventory = { "RedPen" }
 Stub.time = Stub.time + 1000
 VF.map.lastRefresh = 0
 VF.map.onTick()
 check("overlay appears with the map", VF.map.overlay ~= nil)
+check("dots take the pen's colour", VF.map.tool ~= nil and VF.map.tool.item == "RedPen",
+      VF.map.tool and VF.map.tool.item)
 check("overlay covers the map", VF.map.overlay ~= nil
       and VF.map.overlay:getWidth() == 800 and VF.map.overlay:getHeight() == 600)
 check("dot list built", #(VF.map.overlay.entries or {}) == 2,
@@ -420,6 +454,21 @@ Stub.time = Stub.time + 1000
 VF.map.onTick()
 check("turning the dots off removes the overlay", VF.map.overlay == nil)
 VF.setMapMarkers(true)
+
+print("double click shows a vehicle on the map")
+Stub.mapCentredOn = nil
+Stub.vehicles = { Stub.makeVehicle(1, "Base.CarNormal", 10100, 9100) }
+Stub.time = Stub.time + 1000
+win = VF.window or VF.openWindow()
+win:update()
+win.list:doubleClickRow(1)
+check("double click tracks the vehicle", VF.trackedId == "1", VF.trackedId)
+check("double click centres the map on it",
+      Stub.mapCentredOn ~= nil and Stub.mapCentredOn.x == 10100
+      and Stub.mapCentredOn.y == 9100,
+      Stub.mapCentredOn and (Stub.mapCentredOn.x .. "," .. Stub.mapCentredOn.y))
+VF.setTracked(nil)
+
 Stub.closeMap()
 Stub.mapProjection = "xy"
 VF.map.projectorFn = nil

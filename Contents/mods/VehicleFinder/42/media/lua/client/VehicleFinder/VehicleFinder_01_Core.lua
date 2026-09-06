@@ -187,6 +187,50 @@ function VF.truncate(text, font, maxWidth)
     return text
 end
 
+-- ----------------------------------------------------- writing tools ---
+
+-- Same items the vanilla map annotation UI accepts, with the colours it draws
+-- them in. Marking vehicles on the map needs one of these in the inventory,
+-- exactly like drawing on the map by hand does.
+VF.WRITING_TOOLS = {
+    { item = "RedPen",   r = 0.78, g = 0.12, b = 0.12 },
+    { item = "BluePen",  r = 0.25, g = 0.32, b = 0.72 },
+    { item = "GreenPen", r = 0.14, g = 0.58, b = 0.26 },
+    { item = "Pen",      r = 0.40, g = 0.40, b = 0.42 },
+    { item = "Pencil",   r = 0.48, g = 0.48, b = 0.46 },
+}
+
+--- The colour the player can mark the map in, or nil when they carry nothing
+--- to write with. Coloured pens come first so the dots stay readable.
+function VF.writingTool(player)
+    player = player or getSpecificPlayer(0)
+    if not player then return nil end
+    local inventory
+    VF.safe(function() inventory = player:getInventory() end)
+    if not inventory then return nil end
+
+    for i = 1, #VF.WRITING_TOOLS do
+        local tool = VF.WRITING_TOOLS[i]
+        local found = false
+        VF.safe(function()
+            if inventory.containsTypeRecurse then
+                found = inventory:containsTypeRecurse(tool.item) == true
+            end
+        end)
+        if not found then
+            -- modded pens carry the vanilla tag instead of the vanilla type
+            VF.safe(function()
+                if inventory.containsTagRecurse and ItemTag and ResourceLocation then
+                    found = inventory:containsTagRecurse(
+                        ItemTag.get(ResourceLocation.of(tool.item))) == true
+                end
+            end)
+        end
+        if found then return tool end
+    end
+    return nil
+end
+
 -- ------------------------------------------------------ sandbox options ---
 
 --- Sandbox option VehicleFinder.ShowBurnt: whether burnt wrecks belong in the

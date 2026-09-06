@@ -96,7 +96,7 @@ function VF.openWindow()
     local w = VF.config.windowW or VF.defaults.windowW
     local h = VF.config.windowH or VF.defaults.windowH
     local sw, sh = VF.screenWidth(), VF.screenHeight()
-    w = VF.clamp(w, 280, sw)
+    w = VF.clamp(w, 340, sw)      -- keeps the two toggles side by side
     h = VF.clamp(h, 220, sh)
     local x, y = VF.config.windowX, VF.config.windowY
     if not x or not y or x < 0 or y < 0 then

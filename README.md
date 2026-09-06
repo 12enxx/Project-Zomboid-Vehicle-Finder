@@ -48,15 +48,24 @@ tapi memang dirancang biar gak tabrakan sama mod lain:
 
 ## Titik di peta
 
-Buka peta dunia (M), kendaraan muncul sebagai titik:
+Buka peta dunia (M), kendaraan muncul sebagai titik.
+
+**Butuh alat tulis.** Titiknya cuma muncul kalau kamu bawa **pen / pencil**
+(Pen, Pencil, RedPen, BluePen, GreenPen) — aturan yang sama persis kayak
+nyoret-nyoret peta secara manual di vanilla. Nggak bawa apa-apa, nggak ada
+titik, dan footer jendelanya nulis `map dots need a pen` biar jelas kenapa.
+Warna titiknya ngikut pen yang kamu bawa (pen warna didahulukan biar kebaca).
 
 | Titik | Artinya |
 | --- | --- |
-| Kotak isi (warna mobilnya) | lagi ke-load sekarang |
+| Kotak isi | lagi ke-load sekarang |
 | Kotak kosong | dari catatan, terakhir kelihatan di situ |
 | Kotak amber + nama | kendaraan yang lagi kamu track |
 
 Titik dari catatan cuma muncul kalau mode **Range: all known** nyala.
+
+**Double klik** satu baris di daftar = track kendaraannya **dan** buka peta
+langsung ke posisinya.
 
 Bisa dimatiin lewat klik kanan tombol mobilnya → **Dots on the world map**.
 
@@ -66,9 +75,19 @@ daftar symbol peta (yang berarti harus ngurus umur symbol-nya dan rebutan sama
 mod lain), dan nggak ada fungsi peta vanilla yang di-hook. Yang dipinjam dari
 peta cuma satu: konversi koordinat dunia ke pixel peta.
 
-Konversi itu bentuknya beda antar build (`worldToUIX(x, y)` atau
-`worldToUIX(x)`), jadi mod nyoba dua-duanya sekali di awal terus nyatet mana
-yang kepakai di `console.txt`:
+Dua hal yang bikin versi pertamanya nggak kelihatan sama sekali:
+
+1. Pollingnya nempel di `OnTick`. Buka peta itu **mempause game** di single
+   player, dan game yang dipause berhenti nge-tick — jadi overlay-nya nggak
+   pernah kebikin. Sekarang pakai `OnRenderTick` (per frame gambar, jalan
+   terus walau dipause).
+2. Singleton peta yang bener itu global `ISWorldMap_instance` (di-set sama
+   `ISWorldMap.ShowWorldMap`); `ISWorldMap.instance` baru keisi belakangan
+   dari prerender peta. Sekarang dicek dua-duanya.
+
+Konversi koordinatnya `worldToUIX(x, y)` — dua argumen, sesuai source vanilla.
+Bentuk satu argumen tetap didukung sebagai cadangan, dan mod nyatet mana yang
+kepakai di `console.txt`:
 
 ```
 [VehicleFinder] map projection: worldToUIX(x, y)

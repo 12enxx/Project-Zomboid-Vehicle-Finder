@@ -104,7 +104,7 @@ end
 Events = {}
 local EVENT_NAMES = {
     "OnGameBoot", "OnGameStart", "OnKeyPressed", "OnResolutionChange",
-    "OnPlayerDeath", "OnMainMenuEnter", "OnTick",
+    "OnPlayerDeath", "OnMainMenuEnter", "OnTick", "OnRenderTick",
 }
 for _, name in ipairs(EVENT_NAMES) do
     Events[name] = {
@@ -201,11 +201,24 @@ end
 
 function getPlayer() return Stub.player end
 
+-- item types the player is carrying, e.g. { "RedPen" }
+Stub.inventory = {}
+
 function Stub.setPlayer(x, y)
     Stub.player = {
         getX = function() return x end,
         getY = function() return y end,
         isDead = function() return false end,
+        getInventory = function()
+            return {
+                containsTypeRecurse = function(_, item)
+                    for _, held in ipairs(Stub.inventory) do
+                        if held == item then return true end
+                    end
+                    return false
+                end,
+            }
+        end,
     }
 end
 
@@ -356,6 +369,14 @@ function ISScrollingListBox:size() return #self.items end
 function ISScrollingListBox:setOnMouseDownFunction(target, fn)
     self.target, self.onmousedown = target, fn
 end
+function ISScrollingListBox:setOnMouseDoubleClick(target, fn)
+    self.target, self.onmousedblclick = target, fn
+end
+function ISScrollingListBox:doubleClickRow(index)
+    self.selected = index
+    local entry = self.items[index]
+    if entry and self.onmousedblclick then self.onmousedblclick(self.target, entry.item) end
+end
 function ISScrollingListBox:clickRow(index)
     self.selected = index
     local entry = self.items[index]
@@ -420,6 +441,15 @@ local function mapAPI()
     return api
 end
 
+Stub.mapCentredOn = nil
+
+function ISWorldMap.IsAllowed() return true end
+
+function ISWorldMap.ShowWorldMap(playerNum, centerX, centerY, zoom)
+    Stub.mapCentredOn = { player = playerNum, x = centerX, y = centerY, zoom = zoom }
+    Stub.openMap(0, 0, 800, 600)
+end
+
 function Stub.openMap(x, y, w, h)
     ISWorldMap.instance = {
         mapAPI = mapAPI(),
@@ -430,9 +460,13 @@ function Stub.openMap(x, y, w, h)
         getHeight = function() return h or 600 end,
     }
     Stub.mapOpen = true
+    ISWorldMap_instance = ISWorldMap.instance
 end
 
-function Stub.closeMap() Stub.mapOpen = false end
+function Stub.closeMap()
+    Stub.mapOpen = false
+    ISWorldMap_instance = nil
+end
 
 ISContextMenu = { options = {} }
 function ISContextMenu.get(player, x, y)
