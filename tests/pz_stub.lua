@@ -389,6 +389,51 @@ end
 function ISButton:setTitle(title) self.title = title end
 function ISButton:click() if self.onclick then self.onclick(self.target, self) end end
 
+-- World map. Stub.mapProjection picks which conversion the build offers:
+-- "xy" = worldToUIX(x, y), "x" = worldToUIX(x).
+Stub.mapProjection = "xy"
+Stub.mapOpen = false
+
+ISWorldMap = {}
+
+local function mapAPI()
+    local api = {}
+    if Stub.mapProjection == "xy" then
+        api.worldToUIX = function(_, x, y)
+            assert(type(y) == "number", "worldToUIX(x, y) needs two numbers")
+            return (x - 10000) * 0.5
+        end
+        api.worldToUIY = function(_, x, y)
+            assert(type(y) == "number", "worldToUIY(x, y) needs two numbers")
+            return (y - 9000) * 0.5
+        end
+    else
+        api.worldToUIX = function(_, x, y)
+            assert(y == nil, "this build only takes worldToUIX(x)")
+            return (x - 10000) * 0.5
+        end
+        api.worldToUIY = function(_, y, extra)
+            assert(extra == nil, "this build only takes worldToUIY(y)")
+            return (y - 9000) * 0.5
+        end
+    end
+    return api
+end
+
+function Stub.openMap(x, y, w, h)
+    ISWorldMap.instance = {
+        mapAPI = mapAPI(),
+        getIsVisible = function() return Stub.mapOpen end,
+        getX = function() return x or 0 end,
+        getY = function() return y or 0 end,
+        getWidth = function() return w or 800 end,
+        getHeight = function() return h or 600 end,
+    }
+    Stub.mapOpen = true
+end
+
+function Stub.closeMap() Stub.mapOpen = false end
+
 ISContextMenu = { options = {} }
 function ISContextMenu.get(player, x, y)
     local menu = { options = {}, submenus = {} }

@@ -46,6 +46,37 @@ tapi memang dirancang biar gak tabrakan sama mod lain:
   - **Burnt: shown / hidden** — sembunyiin wreck hangus tanpa perlu bikin dunia
     baru. Ini nimpa sandbox option-nya buat pemain ini.
 
+## Titik di peta
+
+Buka peta dunia (M), kendaraan muncul sebagai titik:
+
+| Titik | Artinya |
+| --- | --- |
+| Kotak isi (warna mobilnya) | lagi ke-load sekarang |
+| Kotak kosong | dari catatan, terakhir kelihatan di situ |
+| Kotak amber + nama | kendaraan yang lagi kamu track |
+
+Titik dari catatan cuma muncul kalau mode **Range: all known** nyala.
+
+Bisa dimatiin lewat klik kanan tombol mobilnya → **Dots on the world map**.
+
+Cara kerjanya: mod naruh panel transparan sendiri di atas peta yang lagi
+kebuka, terus nggambar titiknya sendiri. Nggak ada symbol yang disuntik ke
+daftar symbol peta (yang berarti harus ngurus umur symbol-nya dan rebutan sama
+mod lain), dan nggak ada fungsi peta vanilla yang di-hook. Yang dipinjam dari
+peta cuma satu: konversi koordinat dunia ke pixel peta.
+
+Konversi itu bentuknya beda antar build (`worldToUIX(x, y)` atau
+`worldToUIX(x)`), jadi mod nyoba dua-duanya sekali di awal terus nyatet mana
+yang kepakai di `console.txt`:
+
+```
+[VehicleFinder] map projection: worldToUIX(x, y)
+```
+
+Kalau dua-duanya nggak ada, titiknya dimatiin sendiri dan sisa mod-nya tetap
+jalan normal.
+
 ## Advanced search: kendaraan yang pernah kelihatan
 
 Batasnya begini: kendaraan cuma ada sebagai objek selama chunk-nya di-load
@@ -194,6 +225,7 @@ Contents/mods/VehicleFinder/
         VehicleFinder_05_Window.lua    jendela utama (search, list, tracking)
         VehicleFinder_06_Main.lua      keybinding + event, satu-satunya entry point
       VehicleFinder_07_History.lua   catatan kendaraan yang pernah kelihatan
+      VehicleFinder_08_Map.lua       titik di peta dunia
       lua/shared/Translate/EN/IG_UI_EN.txt
       lua/shared/Translate/EN/Sandbox_EN.txt
       sandbox-options.txt                sandbox option "List burnt vehicles"

@@ -119,6 +119,10 @@ function VF.buildButtonClass()
             end
         end
 
+        local markers = menu:addOption(VF.text("IGUI_VehicleFinder_MapDots", "Dots on the world map"),
+                                       self, function() VF.setMapMarkers(not VF.config.mapMarkers) end)
+        menu:setOptionChecked(markers, VF.config.mapMarkers == true)
+
         menu:addOption(VF.text("IGUI_VehicleFinder_ResetPos", "Reset button position"),
                        self, function() VF.resetButtonPosition() end)
         menu:addOption(VF.text("IGUI_VehicleFinder_HideButton", "Hide button (keyboard only)"),

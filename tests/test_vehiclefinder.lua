@@ -364,6 +364,69 @@ VF.openWindow()
 check("geometry restored", VF.window:getX() == 300 and VF.window:getWidth() == 500)
 noWarnings("resize")
 
+print("dots on the world map")
+Stub.vehicles = {
+    Stub.makeVehicle(1, "Base.CarNormal", 10100, 9100, { 0.5, 0.2, 0.2 }),
+    Stub.makeVehicle(2, "Base.PickUpTruck", 10200, 9200),
+}
+Stub.setPlayer(10100, 9100)
+VF.config.mapMarkers = true
+VF.map.projectorFn = nil
+Stub.time = Stub.time + 1000
+VF.map.onTick()
+check("no overlay while the map is closed", VF.map.overlay == nil)
+
+Stub.openMap(0, 0, 800, 600)
+Stub.time = Stub.time + 1000
+VF.map.lastRefresh = 0
+VF.map.onTick()
+check("overlay appears with the map", VF.map.overlay ~= nil)
+check("overlay covers the map", VF.map.overlay ~= nil
+      and VF.map.overlay:getWidth() == 800 and VF.map.overlay:getHeight() == 600)
+check("dot list built", #(VF.map.overlay.entries or {}) == 2,
+      #(VF.map.overlay.entries or {}))
+Stub.drawCalls = {}
+VF.map.overlay:render()
+check("dots painted", #Stub.drawCalls >= 4, #Stub.drawCalls)
+
+VF.setTracked(VF.map.overlay.entries[1])
+Stub.drawCalls = {}
+VF.map.overlay:render()
+local texts = 0
+for _, call in ipairs(Stub.drawCalls) do if call.kind == "text" then texts = texts + 1 end end
+check("tracked vehicle gets a label on the map", texts == 1, texts)
+VF.setTracked(nil)
+
+-- the other projection shape, for builds that take one argument
+Stub.closeMap()
+Stub.time = Stub.time + 1000
+VF.map.onTick()
+check("overlay removed when the map closes", VF.map.overlay == nil)
+
+VF.map.projectorFn = nil
+Stub.mapProjection = "x"
+Stub.openMap(0, 0, 800, 600)
+Stub.time = Stub.time + 1000
+VF.map.lastRefresh = 0
+VF.map.onTick()
+check("works with the one argument projection", VF.map.overlay ~= nil)
+Stub.drawCalls = {}
+if VF.map.overlay then VF.map.overlay:render() end
+check("dots painted on that build too", #Stub.drawCalls >= 4, #Stub.drawCalls)
+warnings = {}   -- probing the wrong shape logs once, on purpose
+
+VF.setMapMarkers(false)
+Stub.time = Stub.time + 1000
+VF.map.onTick()
+check("turning the dots off removes the overlay", VF.map.overlay == nil)
+VF.setMapMarkers(true)
+Stub.closeMap()
+Stub.mapProjection = "xy"
+VF.map.projectorFn = nil
+Stub.setPlayer(100, 100)
+Stub.vehicles = kept
+noWarnings("map dots")
+
 print("context menu")
 VF.button:onRightMouseUp(1, 1)
 local menu = ISContextMenu.last

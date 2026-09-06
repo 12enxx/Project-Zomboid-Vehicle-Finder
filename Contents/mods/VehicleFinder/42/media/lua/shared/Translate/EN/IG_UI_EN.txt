@@ -17,6 +17,7 @@ IG_UI_EN = {
     IGUI_VehicleFinder_NoneKnown = "No vehicles seen yet",
     IGUI_VehicleFinder_OutOfRange = "Tracked vehicle is out of loaded range",
     IGUI_VehicleFinder_ButtonSize = "Button size",
+    IGUI_VehicleFinder_MapDots = "Dots on the world map",
     IGUI_VehicleFinder_ResetPos = "Reset button position",
     IGUI_VehicleFinder_HideButton = "Hide button (keyboard only)",
     IGUI_VehicleFinder_HiddenHint = "Vehicle Finder button hidden - press %s to open the window",

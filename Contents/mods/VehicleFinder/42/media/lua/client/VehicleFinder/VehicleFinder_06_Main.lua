@@ -205,10 +205,18 @@ function VF.ensureUI()
     if VF.config.buttonVisible then VF.createButton() end
 end
 
+function VF.setMapMarkers(enabled)
+    VF.config.mapMarkers = enabled and true or false
+    VF.saveConfig()
+    if not VF.config.mapMarkers and VF.map and VF.map.destroy then VF.map.destroy() end
+end
+
 function VF.teardown()
     VF.closeWindow()
     VF.destroyButton()
     VF.setTracked(nil)
+    if VF.map and VF.map.destroy then VF.map.destroy() end
+    if VF.history and VF.history.reset then VF.history.reset() end
 end
 
 local function onGameStart()
