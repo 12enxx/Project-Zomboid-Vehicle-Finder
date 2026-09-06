@@ -250,10 +250,20 @@ local function onPlayerDeath(player)
     VF.setTracked(nil)
 end
 
-VF.registerKeyBinding()
-VF.addEvent("OnGameBoot", VF.registerKeyBinding)
-VF.addEvent("OnGameStart", onGameStart)
-VF.addEvent("OnKeyPressed", onKeyPressed)
-VF.addEvent("OnResolutionChange", onResolutionChange)
-VF.addEvent("OnPlayerDeath", onPlayerDeath)
-VF.addEvent("OnMainMenuEnter", VF.teardown)
+-- Bind once, even if this file is loaded twice. That happens when the same
+-- mod is installed in two places at the same time (a local copy in
+-- Zomboid/mods and a Workshop copy, for instance): without this guard every
+-- handler would run twice and the hotkey would open and close the window in
+-- the same keystroke.
+if not VF.eventsBound then
+    VF.eventsBound = true
+    VF.registerKeyBinding()
+    VF.addEvent("OnGameBoot", VF.registerKeyBinding)
+    VF.addEvent("OnGameStart", onGameStart)
+    VF.addEvent("OnKeyPressed", onKeyPressed)
+    VF.addEvent("OnResolutionChange", onResolutionChange)
+    VF.addEvent("OnPlayerDeath", onPlayerDeath)
+    VF.addEvent("OnMainMenuEnter", VF.teardown)
+else
+    VF.log("already loaded, skipping the second registration")
+end
