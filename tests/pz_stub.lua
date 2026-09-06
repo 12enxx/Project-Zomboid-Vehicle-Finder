@@ -109,7 +109,9 @@ local function makeScript(fullName)
     }
 end
 
-function Stub.makeVehicle(id, fullName, x, y, color)
+SandboxVars = { VehicleFinder = { ShowBurnt = true } }
+
+function Stub.makeVehicle(id, fullName, x, y, color, burnt)
     local v = {
         getX = function() return x end,
         getY = function() return y end,
@@ -121,6 +123,9 @@ function Stub.makeVehicle(id, fullName, x, y, color)
         v.getColorRed = function() return color[1] end
         v.getColorGreen = function() return color[2] end
         v.getColorBlue = function() return color[3] end
+    end
+    if burnt ~= nil then
+        v.isBurnt = function() return burnt end
     end
     return v
 end

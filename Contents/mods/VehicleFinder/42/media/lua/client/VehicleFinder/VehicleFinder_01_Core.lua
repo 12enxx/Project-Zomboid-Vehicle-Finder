@@ -168,6 +168,25 @@ function VF.worldToScreenDir(dx, dy)
     return sx / len, sy / len
 end
 
+-- ------------------------------------------------------ sandbox options ---
+
+--- Sandbox option VehicleFinder.ShowBurnt: whether burnt wrecks belong in the
+--- search results. They cannot be driven, only dismantled, so a player looking
+--- for a car usually wants them out of the way.
+---
+--- Defaults to true when the option is missing - in the main menu, or in a
+--- save created before the option existed.
+function VF.showBurnt()
+    local ok, value = VF.safe(function()
+        if SandboxVars and SandboxVars.VehicleFinder then
+            return SandboxVars.VehicleFinder.ShowBurnt
+        end
+        return nil
+    end)
+    if ok and type(value) == "boolean" then return value end
+    return true
+end
+
 -- ---------------------------------------------- java collections (B42) ---
 
 --- Copies a Java collection into a Lua array, whatever its concrete type.

@@ -98,6 +98,32 @@ check("missing colour tolerated", entries[2].r == nil)
 check("direction", entries[1].dir == "E" and entries[2].dir == "N")
 noWarnings("scan")
 
+print("burnt wrecks follow the sandbox option")
+local savedVehicles = Stub.vehicles
+Stub.vehicles = {
+    Stub.makeVehicle(1, "Base.CarNormal", 110, 100),
+    Stub.makeVehicle(9, "Base.SmallCar02Burnt", 105, 100),
+    Stub.makeVehicle(10, "SomeCarMod.RustyThing", 106, 100, nil, true),
+}
+SandboxVars.VehicleFinder.ShowBurnt = true
+check("burnt listed when the option is on", #VF.scanVehicles() == 3, #VF.scanVehicles())
+SandboxVars.VehicleFinder.ShowBurnt = false
+local drivable = VF.scanVehicles()
+check("burnt dropped when the option is off", #drivable == 1, #drivable)
+check("the drivable one survives", drivable[1] ~= nil and drivable[1].name == "Chevalier Cerise",
+      drivable[1] and drivable[1].name)
+check("detected from the script name", VF.isBurntVehicle(Stub.vehicles[2]) == true)
+check("detected from isBurnt() when a build exposes it",
+      VF.isBurntVehicle(Stub.vehicles[3]) == true)
+check("a normal car is not flagged", VF.isBurntVehicle(Stub.vehicles[1]) == false)
+local savedSandbox = SandboxVars.VehicleFinder
+SandboxVars.VehicleFinder = nil
+check("missing sandbox option lists everything", #VF.scanVehicles() == 3, #VF.scanVehicles())
+SandboxVars.VehicleFinder = savedSandbox
+SandboxVars.VehicleFinder.ShowBurnt = true
+Stub.vehicles = savedVehicles
+noWarnings("burnt filter")
+
 print("button lives on its own, away from other mods' HUD")
 -- occupy the first candidate slot with a fake element from "another mod"
 Stub.addFakeUI(12, 1080 - 40 - 16, 40, 40)

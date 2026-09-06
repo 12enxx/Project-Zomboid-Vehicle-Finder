@@ -8,6 +8,7 @@ IG_UI_EN = {
     IGUI_VehicleFinder_Count = "%d vehicles nearby",
     IGUI_VehicleFinder_Filtered = "%d of %d vehicles",
     IGUI_VehicleFinder_ClearTarget = "Clear target",
+    IGUI_VehicleFinder_BurntHidden = "burnt hidden",
     IGUI_VehicleFinder_OutOfRange = "Tracked vehicle is out of loaded range",
     IGUI_VehicleFinder_ButtonSize = "Button size",
     IGUI_VehicleFinder_ResetPos = "Reset button position",

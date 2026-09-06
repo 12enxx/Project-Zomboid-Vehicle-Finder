@@ -196,6 +196,9 @@ function VF.buildWindowClass()
         else
             label = string.format(VF.text("IGUI_VehicleFinder_Filtered", "%d of %d vehicles"), shown, total)
         end
+        if not VF.showBurnt() then
+            label = label .. " - " .. VF.text("IGUI_VehicleFinder_BurntHidden", "burnt hidden")
+        end
         self:drawText(label, PAD, y, 0.75, 0.78, 0.72, 1, font)
 
         if VF.trackedInfo then

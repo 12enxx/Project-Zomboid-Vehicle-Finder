@@ -19,16 +19,26 @@ function VF.prettifyName(name)
     return out
 end
 
---- Display name for a vehicle: translation first, then a readable fallback
---- built from the script name (mod vehicles frequently lack IGUI entries).
-function VF.vehicleName(vehicle)
-    local result
+--- Raw script name of a vehicle, e.g. "Base.CarNormal". Read once per scan
+--- and passed around, so a vehicle's script is only fetched a single time.
+function VF.scriptName(vehicle)
+    local raw
     VF.safe(function()
         local script = vehicle:getScript()
         if not script then return end
-        local raw = script:getName()
+        if script.getFullName then raw = script:getFullName() end
+        if not raw and script.getName then raw = script:getName() end
+    end)
+    return raw and tostring(raw) or nil
+end
+
+--- Display name for a vehicle: translation first, then a readable fallback
+--- built from the script name (mod vehicles frequently lack IGUI entries).
+function VF.vehicleName(vehicle, scriptName)
+    local result
+    VF.safe(function()
+        local raw = scriptName or VF.scriptName(vehicle)
         if not raw then return end
-        raw = tostring(raw)
         local short = string.match(raw, "([^%.]+)$") or raw
         if getTextOrNull then
             local t = getTextOrNull("IGUI_VehicleName" .. short)
@@ -43,18 +53,26 @@ function VF.vehicleName(vehicle)
 end
 
 --- Module a vehicle script comes from ("Base" for vanilla, mod id otherwise).
-function VF.vehicleModule(vehicle)
-    local module
+function VF.vehicleModule(vehicle, scriptName)
+    local raw = scriptName or VF.scriptName(vehicle)
+    if not raw then return nil end
+    return string.match(raw, "^([^%.]+)%.")
+end
+
+--- True for a burnt wreck. Burnt vehicles are separate vehicle scripts in
+--- vanilla and in every vehicle mod that follows the vanilla naming, so the
+--- script name is the reliable signal; isBurnt() is used when the build
+--- happens to expose it.
+function VF.isBurntVehicle(vehicle, scriptName)
+    local raw = scriptName or VF.scriptName(vehicle)
+    if raw and string.find(string.lower(raw), "burnt", 1, true) then
+        return true
+    end
+    local flagged
     VF.safe(function()
-        local script = vehicle:getScript()
-        if not script then return end
-        local full
-        if script.getFullName then full = script:getFullName() end
-        if not full and script.getName then full = script:getName() end
-        if not full then return end
-        module = string.match(tostring(full), "^([^%.]+)%.")
+        if vehicle.isBurnt then flagged = vehicle:isBurnt() end
     end)
-    return module
+    return flagged == true
 end
 
 --- Body colour as 0..1 rgb, or nil when the build/mod does not expose it.
@@ -95,11 +113,13 @@ function VF.describe(vehicle, px, py)
         if type(x) ~= "number" or type(y) ~= "number" then return end
         local dx, dy = x - px, y - py
         local dir = VF.compass(dx, dy)
+        local raw = VF.scriptName(vehicle)
         entry = {
             vehicle = vehicle,
             id = VF.vehicleId(vehicle),
-            name = VF.vehicleName(vehicle),
-            module = VF.vehicleModule(vehicle),
+            name = VF.vehicleName(vehicle, raw),
+            module = VF.vehicleModule(vehicle, raw),
+            burnt = VF.isBurntVehicle(vehicle, raw),
             x = x,
             y = y,
             dx = dx,
@@ -127,10 +147,13 @@ function VF.scanVehicles()
     VF.safe(function()
         local cell = getCell()
         if not cell or not cell.getVehicles then return end
+        local showBurnt = VF.showBurnt()
         local vehicles = VF.toTable(cell:getVehicles())
         for i = 1, #vehicles do
             local entry = VF.describe(vehicles[i], px, py)
-            if entry then table.insert(result, entry) end
+            if entry and (showBurnt or not entry.burnt) then
+                table.insert(result, entry)
+            end
         end
     end)
 

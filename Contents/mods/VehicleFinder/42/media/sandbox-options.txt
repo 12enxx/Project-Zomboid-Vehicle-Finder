@@ -1,0 +1,9 @@
+VERSION = 1,
+
+option VehicleFinder.ShowBurnt
+{
+    type = boolean,
+    default = true,
+    page = VehicleFinder,
+    translation = VehicleFinder_ShowBurnt,
+}

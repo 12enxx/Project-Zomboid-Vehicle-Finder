@@ -38,6 +38,31 @@ tapi memang dirancang biar gak tabrakan sama mod lain:
 - Ketik di kolom search buat nyaring nama kendaraan.
 - Klik satu baris buat nge-track kendaraannya, "Clear target" buat berhenti.
 
+## Sandbox option: mobil hangus (burnt)
+
+Mobil hangus nggak bisa dikendarai — cuma bisa dipreteli buat part. Kalau kamu
+lagi nyari mobil buat dipakai, wreck begitu cuma bikin daftarnya rame.
+
+Ada satu sandbox option buat itu:
+
+| Option | Default | Efek |
+| --- | --- | --- |
+| **Vehicle Finder → List burnt vehicles** | `on` | `off` = semua wreck hangus dibuang dari hasil pencarian |
+
+Cara nyetelnya: waktu bikin dunia baru, pilih **Sandbox** (bukan preset
+Apocalypse/Survivor langsung) → cari halaman **Vehicle Finder** di daftar
+kategori sebelah kiri.
+
+Catatan penting: sandbox option itu **per-dunia**, disimpan di save-nya, dan
+dipilih waktu dunia dibuat. Jadi buat save yang udah jalan, setelannya nggak
+bisa diubah dari dalam game. Kalau kamu mau bisa ganti kapan aja tanpa bikin
+dunia baru, bilang aja — aku tambahin checkbox di jendelanya.
+
+Deteksi hangusnya dari nama script kendaraan (`...Burnt`), jadi wreck dari mod
+mobil lain yang ikut penamaan vanilla juga kefilter. Kalau build-nya nyediain
+`isBurnt()`, itu dipakai sebagai cadangan. Waktu filternya aktif, footer
+jendelanya nulis `burnt hidden` biar jelas kenapa ada mobil yang nggak muncul.
+
 Cakupan pencarian = area yang lagi di-load game (chunk sekitar pemain). Mod ini
 gak baca file save atau peta, jadi gak ada info kendaraan yang belum pernah
 ke-load.
@@ -129,6 +154,8 @@ Contents/mods/VehicleFinder/
         VehicleFinder_05_Window.lua    jendela utama (search, list, tracking)
         VehicleFinder_06_Main.lua      keybinding + event, satu-satunya entry point
       lua/shared/Translate/EN/IG_UI_EN.txt
+      lua/shared/Translate/EN/Sandbox_EN.txt
+      sandbox-options.txt                sandbox option "List burnt vehicles"
       textures/VehicleFinder_Car.png
 tests/                               stub API PZ + test
 tools/                               generator ikon + runner test
