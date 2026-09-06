@@ -61,19 +61,48 @@ gak pernah jadi kotak kosong.
 
 ## Install
 
-Copy folder `Contents/mods/VehicleFinder` ke:
+Yang dicopy ke game itu **folder `VehicleFinder`-nya saja**, bukan folder repo,
+bukan folder `Contents`. Tujuannya:
 
 ```
-%USERPROFILE%\Zomboid\mods\VehicleFinder        (Windows)
-~/Zomboid/mods/VehicleFinder                     (Linux)
+Windows : %USERPROFILE%\Zomboid\mods\VehicleFinder\
+Linux   : ~/Zomboid/mods/VehicleFinder/
 ```
 
-Isinya harus jadi `.../mods/VehicleFinder/mod.info` + `.../mods/VehicleFinder/42/`.
+Setelah dicopy, susunannya harus persis begini (cek `mod.info` ada di level
+paling atas folder `VehicleFinder`, bukan di dalam folder lain lagi):
+
+```
+Zomboid/mods/VehicleFinder/
+    mod.info                 <- harus ada di sini
+    poster.png
+    media/
+        lua/client/VehicleFinder/*.lua
+        lua/shared/Translate/EN/IG_UI_EN.txt
+        textures/VehicleFinder_Car.png
+```
+
 Terus aktifin lewat menu **Mods** di dalam game.
 
+### Kalau mod-nya nggak muncul di menu Mods
+
+Hampir selalu gara-gara folder-nya kelewat satu tingkat. Yang paling sering:
+
+| Salah | Kenapa |
+| --- | --- |
+| `Zomboid\mods\Project-Zomboid-Vehicle-Finder-...\Contents\mods\VehicleFinder\` | folder repo/ZIP ikut kecopy |
+| `Zomboid\mods\Contents\mods\VehicleFinder\` | folder `Contents` ikut kecopy |
+| `Zomboid\mods\VehicleFinder\VehicleFinder\` | Windows bikin folder dobel waktu extract |
+| `Zomboid\Workshop\...` | itu folder buat mod Workshop, bukan mod lokal |
+
+Patokannya satu: **`...\Zomboid\mods\VehicleFinder\mod.info` harus ada.**
+Kalau path itu benar tapi tetap nggak kebaca, buka
+`%USERPROFILE%\Zomboid\console.txt` dan cari baris yang menyebut `mod.info`
+atau `VehicleFinder`.
+
 Setting UI (posisi/ukuran tombol, geometry jendela) disimpan di
-`Zomboid/VehicleFinder_settings.ini`, bukan di save game — jadi gak ngefek ke
-multiplayer dan gak nyampur sama ModData mod lain.
+`Zomboid/VehicleFinder_settings.ini`, bukan di save game - jadi nggak ngefek ke
+multiplayer dan nggak nyampur sama ModData mod lain.
 
 ## Struktur
 
@@ -81,7 +110,7 @@ multiplayer dan gak nyampur sama ModData mod lain.
 Contents/mods/VehicleFinder/
   mod.info
   poster.png
-  42/media/
+  media/
     lua/client/VehicleFinder/
       VehicleFinder_01_Core.lua      namespace, settings, helper, cari posisi kosong
       VehicleFinder_02_Vehicles.lua  scan kendaraan (aman buat kendaraan mod)

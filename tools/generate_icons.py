@@ -13,7 +13,7 @@ import os
 from PIL import Image, ImageDraw
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEX = os.path.join(ROOT, "Contents", "mods", "VehicleFinder", "42",
+TEX = os.path.join(ROOT, "Contents", "mods", "VehicleFinder",
                    "media", "textures")
 
 # ---------------------------------------------------------------- palette ---
