@@ -15,6 +15,7 @@ function VF.prettifyName(name)
     out = string.gsub(out, "_", " ")
     out = string.gsub(out, "(%l)(%u)", "%1 %2")
     out = string.gsub(out, "(%a)(%d)", "%1 %2")
+    out = string.gsub(out, "(%d)(%u)", "%1 %2")
     return out
 end
 

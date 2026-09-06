@@ -90,6 +90,9 @@ for _, e in ipairs(entries) do if e.id == "3" then modded = e end end
 check("mod vehicle detected", modded ~= nil and modded.modded == true)
 check("mod vehicle name falls back to a readable name",
       modded ~= nil and modded.name == "Super Truck", modded and modded.name)
+check("name splits letters, digits and words",
+      VF.prettifyName("SmallCar02Burnt") == "Small Car 02 Burnt",
+      VF.prettifyName("SmallCar02Burnt"))
 check("colour read when available", entries[1].r ~= nil)
 check("missing colour tolerated", entries[2].r == nil)
 check("direction", entries[1].dir == "E" and entries[2].dir == "N")
