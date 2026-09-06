@@ -1,0 +1,5 @@
+Sandbox_EN = {
+    Sandbox_VehicleFinder = "Vehicle Finder",
+    Sandbox_VehicleFinder_ShowBurnt = "List burnt vehicles",
+    Sandbox_VehicleFinder_ShowBurnt_tooltip = "Burnt wrecks cannot be driven, they can only be dismantled for parts. Turn this off to keep them out of the search results.",
+}
