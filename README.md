@@ -37,6 +37,46 @@ tapi memang dirancang biar gak tabrakan sama mod lain:
   atau sembunyiin tombol (tetap bisa dibuka pakai hotkey).
 - Ketik di kolom search buat nyaring nama kendaraan.
 - Klik satu baris buat nge-track kendaraannya, "Clear target" buat berhenti.
+- Tiap baris nunjukin **koordinat peta** (`10723, 9481`) di samping jarak dan
+  arah kompas. Kalau jendelanya disempitin, koordinatnya otomatis disembunyiin
+  biar namanya nggak kepotong.
+- Dua tombol di bawah kolom search:
+  - **Range: nearby / all known** — nyalain pencarian ke kendaraan yang pernah
+    kamu lihat (lihat bagian di bawah).
+  - **Burnt: shown / hidden** — sembunyiin wreck hangus tanpa perlu bikin dunia
+    baru. Ini nimpa sandbox option-nya buat pemain ini.
+
+## Advanced search: kendaraan yang pernah kelihatan
+
+Batasnya begini: kendaraan cuma ada sebagai objek selama chunk-nya di-load
+game. Nggak ada cara bikin scan langsung "nembus" lebih jauh dari itu — Lua
+nggak bisa baca isi save buat chunk yang belum ke-load.
+
+Yang bisa dilakukan: **nyatet**. Tiap kendaraan yang pernah masuk jangkauan
+disimpan (nama, koordinat, warna hangus atau nggak, dan kapan terakhir
+kelihatan). Pencet **Range: all known**, daftarnya jadi gabungan:
+
+| | Ditandai | Isinya |
+| --- | --- | --- |
+| Live | swatch warna isi | kendaraan yang lagi ke-load sekarang |
+| Dari catatan | swatch kosong + umur (`2d`) + teks lebih redup | terakhir kelihatan di koordinat itu |
+
+Jarak dan arah kompas buat entri catatan dihitung dari koordinat tersimpan,
+jadi tetap bisa di-track kayak biasa — tombol mobilnya tetap nunjukin arah
+walau kendaraannya jauh di luar jangkauan.
+
+Catatan teknis:
+
+- Catatannya disimpan di **ModData save-nya**, jadi nempel ke dunia itu dan
+  ikut kehapus kalau save-nya dihapus. Nggak nyampur antar save.
+- Di multiplayer, tabel ModData itu data global server, jadi di sana catatannya
+  cuma disimpan di memori selama sesi.
+- Maksimal 500 entri; yang paling lama nggak kelihatan dibuang duluan.
+- Kalau kendaraannya balik masuk jangkauan, data live yang dipakai — nggak
+  dobel.
+- Kalau mobilnya udah dipindahin orang/kamu sendiri, koordinat catatan bisa
+  basi. Umur sightingnya (`2d`, `5h`) ada di tiap baris supaya kelihatan
+  seberapa bisa dipercaya.
 
 ## Sandbox option: mobil hangus (burnt)
 
@@ -153,6 +193,7 @@ Contents/mods/VehicleFinder/
         VehicleFinder_04_Button.lua    tombol melayang (drag, klik, klik kanan)
         VehicleFinder_05_Window.lua    jendela utama (search, list, tracking)
         VehicleFinder_06_Main.lua      keybinding + event, satu-satunya entry point
+      VehicleFinder_07_History.lua   catatan kendaraan yang pernah kelihatan
       lua/shared/Translate/EN/IG_UI_EN.txt
       lua/shared/Translate/EN/Sandbox_EN.txt
       sandbox-options.txt                sandbox option "List burnt vehicles"

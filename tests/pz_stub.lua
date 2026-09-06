@@ -32,6 +32,26 @@ end
 
 function getTimestampMs() return Stub.time end
 
+-- in-game clock, in hours since the world started
+Stub.worldHours = 0
+
+function getGameTime()
+    return { getWorldAgeHours = function() return Stub.worldHours end }
+end
+
+-- per-save storage, where the "seen earlier" log lives
+Stub.modData = {}
+
+ModData = {
+    getOrCreate = function(name)
+        Stub.modData[name] = Stub.modData[name] or {}
+        return Stub.modData[name]
+    end,
+}
+
+Stub.multiplayer = false
+function isClient() return Stub.multiplayer end
+
 UIFont = { Small = "Small", Medium = "Medium" }
 
 function getTextManager()
@@ -366,6 +386,7 @@ function ISButton:new(x, y, w, h, title, target, onclick)
     o.title, o.target, o.onclick = title, target, onclick
     return o
 end
+function ISButton:setTitle(title) self.title = title end
 function ISButton:click() if self.onclick then self.onclick(self.target, self) end end
 
 ISContextMenu = { options = {} }

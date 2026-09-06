@@ -252,6 +252,105 @@ window.clearButton:click()
 check("clear button clears the target", VF.trackedId == nil)
 noWarnings("tracking")
 
+print("coordinates are part of every entry")
+check("live entry carries map coordinates",
+      entries[1].x == 110 and entries[1].y == 100,
+      entries[1].x .. "," .. entries[1].y)
+
+print("advanced search: vehicles remembered from earlier")
+local function wipeHistory()
+    VF.history.reset()
+    VF.history.clear()
+end
+wipeHistory()
+Stub.worldHours = 100
+Stub.vehicles = {
+    Stub.makeVehicle(1, "Base.CarNormal", 110, 100, { 0.5, 0.2, 0.2 }),
+    Stub.makeVehicle(2, "Base.PickUpTruck", 100, 80),
+}
+VF.scanVehicles()                       -- walks past them, writing the log
+check("sightings written to the log", VF.history.count() == 2, VF.history.count())
+
+Stub.vehicles = {}                      -- drive away, chunks unload
+Stub.worldHours = 148                   -- two in-game days later
+check("nearby search sees nothing now", #VF.searchEntries(false) == 0)
+local known = VF.searchEntries(true)
+check("wider search finds them again", #known == 2, #known)
+check("remembered entries are flagged", known[1].remembered == true)
+check("distance recomputed from the stored spot",
+      math.floor(known[1].dist) == 10, known[1].dist)
+check("direction recomputed", known[1].dir == "E", known[1].dir)
+check("age of the sighting", VF.history.formatAge(known[1].ageHours) == "2d",
+      VF.history.formatAge(known[1].ageHours))
+
+Stub.vehicles = { Stub.makeVehicle(1, "Base.CarNormal", 111, 100) }
+local mixed = VF.searchEntries(true)
+check("a vehicle back in range is listed live, not twice", #mixed == 2, #mixed)
+for _, e in ipairs(mixed) do
+    if e.id == "1" then
+        check("the live sighting wins over the logged one", e.remembered == nil)
+    end
+end
+
+wipeHistory()
+Stub.multiplayer = true
+VF.history.reset()          -- a session decides where the log lives when it loads
+Stub.vehicles = { Stub.makeVehicle(7, "Base.CarNormal", 120, 100) }
+VF.scanVehicles()
+local saved, inSave = Stub.modData.VehicleFinder_Seen, 0
+if saved and saved.vehicles then
+    for _ in pairs(saved.vehicles) do inSave = inSave + 1 end
+end
+check("multiplayer keeps the log in memory, not in the save",
+      VF.history.count() == 1 and inSave == 0, VF.history.count() .. "/" .. inSave)
+Stub.multiplayer = false
+VF.history.reset()
+noWarnings("history")
+
+print("burnt toggle inside the window")
+Stub.vehicles = {
+    Stub.makeVehicle(1, "Base.CarNormal", 110, 100),
+    Stub.makeVehicle(9, "Base.SmallCar02Burnt", 105, 100),
+}
+VF.openWindow()
+local win = VF.window
+Stub.time = Stub.time + 1000
+win:update()
+check("both listed to start with", win.list:size() == 2, win.list:size())
+win.burntButton:click()
+check("toggle hides the wrecks", win.list:size() == 1, win.list:size())
+check("button says what it did", win.burntButton.title == "Burnt: hidden", win.burntButton.title)
+check("the toggle overrides the sandbox option", VF.showBurnt() == false)
+win.burntButton:click()
+check("toggling back brings them home", win.list:size() == 2, win.list:size())
+VF.setShowBurnt(nil)
+check("clearing the override follows the sandbox option again",
+      VF.config.showBurnt == -1 and VF.showBurnt() == true)
+
+print("range toggle inside the window")
+wipeHistory()
+Stub.worldHours = 200
+VF.scanVehicles()
+Stub.vehicles = {}
+Stub.time = Stub.time + 1000
+win:update()
+check("nearby mode empties out", win.list:size() == 0, win.list:size())
+win.rangeButton:click()
+check("range toggle brings back the remembered ones", win.list:size() == 2, win.list:size())
+check("range button label", win.rangeButton.title == "Range: all known", win.rangeButton.title)
+check("mode is remembered in the config", VF.config.searchAll == true)
+Stub.drawCalls = {}
+win.list:drawAll()
+win:prerender()
+check("remembered rows and footer paint", #Stub.drawCalls > 0)
+
+win.rangeButton:click()
+wipeHistory()
+Stub.vehicles = kept
+Stub.time = Stub.time + 1000
+win:update()
+noWarnings("toggles")
+
 print("window resize + geometry persistence")
 window:setWidth(500)
 window:setHeight(600)

@@ -70,6 +70,9 @@ VF.defaults = {
     windowY = -1,
     windowW = 360,
     windowH = 400,
+    showBurnt = -1,         -- -1 follow the sandbox option, 0 hide, 1 show
+    searchAll = false,      -- also list vehicles remembered from earlier
+    mapMarkers = true,      -- draw dots on the world map
 }
 
 VF.config = VF.config or {}
@@ -168,6 +171,22 @@ function VF.worldToScreenDir(dx, dy)
     return sx / len, sy / len
 end
 
+--- Cuts text down to maxWidth, ending in "..." when something was removed.
+function VF.truncate(text, font, maxWidth)
+    text = tostring(text or "")
+    local ok, result = VF.safe(function()
+        local manager = getTextManager()
+        if manager:MeasureStringX(font, text) <= maxWidth then return text end
+        local cut = text
+        while #cut > 1 and manager:MeasureStringX(font, cut .. "...") > maxWidth do
+            cut = string.sub(cut, 1, #cut - 1)
+        end
+        return cut .. "..."
+    end)
+    if ok and result then return result end
+    return text
+end
+
 -- ------------------------------------------------------ sandbox options ---
 
 --- Sandbox option VehicleFinder.ShowBurnt: whether burnt wrecks belong in the
@@ -176,7 +195,7 @@ end
 ---
 --- Defaults to true when the option is missing - in the main menu, or in a
 --- save created before the option existed.
-function VF.showBurnt()
+function VF.sandboxShowBurnt()
     local ok, value = VF.safe(function()
         if SandboxVars and SandboxVars.VehicleFinder then
             return SandboxVars.VehicleFinder.ShowBurnt
@@ -185,6 +204,26 @@ function VF.showBurnt()
     end)
     if ok and type(value) == "boolean" then return value end
     return true
+end
+
+--- Effective setting. The sandbox option decides a world's starting point, but
+--- sandbox options are locked once a world exists, so the in-window toggle can
+--- override it per player. -1 in the config means "whatever the sandbox says".
+function VF.showBurnt()
+    local override = VF.config and VF.config.showBurnt
+    if override == 0 then return false end
+    if override == 1 then return true end
+    return VF.sandboxShowBurnt()
+end
+
+--- nil restores the sandbox option, true/false pins the choice.
+function VF.setShowBurnt(value)
+    if value == nil then
+        VF.config.showBurnt = -1
+    else
+        VF.config.showBurnt = value and 1 or 0
+    end
+    VF.saveConfig()
 end
 
 -- ---------------------------------------------- java collections (B42) ---

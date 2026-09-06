@@ -158,6 +158,10 @@ function VF.scanVehicles()
     end)
 
     table.sort(result, function(a, b) return a.dist < b.dist end)
+    VF.lastScan = result
+    if VF.history and VF.history.record then
+        VF.safe(function() VF.history.record(result) end)
+    end
     return result
 end
 
@@ -168,7 +172,7 @@ function VF.updateTracked(entries)
         VF.trackedInfo = nil
         return nil
     end
-    entries = entries or VF.scanVehicles()
+    entries = entries or VF.searchEntries(VF.config and VF.config.searchAll)
     for i = 1, #entries do
         if entries[i].id == VF.trackedId then
             VF.trackedInfo = entries[i]

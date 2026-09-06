@@ -12,6 +12,10 @@ local VF = VehicleFinder
 local REFRESH_MS = 500      -- vehicle rescan interval
 local ROW_HEIGHT = 22
 local PAD = 8
+local SEARCH_H = 22
+local TOGGLE_H = 20
+local HEADER_H = SEARCH_H + 4 + TOGGLE_H + 4   -- search row + toggle row
+local FOOTER_H = 46                            -- tracked line + count line
 
 function VF.buildWindowClass()
     if VF.WindowClass then return VF.WindowClass end
@@ -50,9 +54,23 @@ function VF.buildWindowClass()
         VF.safe(function() self.searchEntry:setClearButton(true) end)
         self:addChild(self.searchEntry)
 
-        self.list = ISScrollingListBox:new(PAD, th + PAD * 2 + 22,
+        self.rangeButton = ISButton:new(PAD, th + PAD + SEARCH_H + 4, 10, TOGGLE_H,
+                                        "", self, Window.onToggleRange)
+        self.rangeButton:initialise()
+        self.rangeButton:instantiate()
+        self.rangeButton.borderColor = { r = 0.4, g = 0.4, b = 0.4, a = 1 }
+        self:addChild(self.rangeButton)
+
+        self.burntButton = ISButton:new(PAD, th + PAD + SEARCH_H + 4, 10, TOGGLE_H,
+                                        "", self, Window.onToggleBurnt)
+        self.burntButton:initialise()
+        self.burntButton:instantiate()
+        self.burntButton.borderColor = { r = 0.4, g = 0.4, b = 0.4, a = 1 }
+        self:addChild(self.burntButton)
+
+        self.list = ISScrollingListBox:new(PAD, th + PAD + HEADER_H,
                                            self.width - PAD * 2,
-                                           self.height - th - PAD * 4 - 22 - 24)
+                                           self.height - th - PAD - HEADER_H - FOOTER_H)
         self.list:initialise()
         self.list:instantiate()
         self.list.itemheight = ROW_HEIGHT
@@ -79,23 +97,60 @@ function VF.buildWindowClass()
         self.clearButton.borderColor = { r = 0.4, g = 0.4, b = 0.4, a = 1 }
         self:addChild(self.clearButton)
 
+        self:refreshToggles()
         self:refreshList()
     end
 
     --- Re-lays out the children; called whenever the window is resized.
     function Window:layout()
         local th = self:titleBarHeight()
+        local inner = self.width - PAD * 2
         if self.searchEntry then
-            self.searchEntry:setWidth(self.width - PAD * 2)
+            self.searchEntry:setWidth(inner)
+        end
+        if self.rangeButton and self.burntButton then
+            local half = math.floor((inner - 6) / 2)
+            self.rangeButton:setWidth(half)
+            self.burntButton:setX(PAD + half + 6)
+            self.burntButton:setWidth(inner - half - 6)
         end
         if self.list then
-            self.list:setWidth(self.width - PAD * 2)
-            self.list:setHeight(math.max(40, self.height - th - PAD * 4 - 22 - 24))
+            self.list:setWidth(inner)
+            self.list:setHeight(math.max(40, self.height - th - PAD - HEADER_H - FOOTER_H))
         end
         if self.clearButton then
             self.clearButton:setX(self.width - PAD - self.clearButton:getWidth())
             self.clearButton:setY(self.height - PAD - 20)
         end
+    end
+
+    --- Toggle labels always show the state they are currently in.
+    function Window:refreshToggles()
+        if self.rangeButton then
+            local title = VF.config.searchAll
+                and VF.text("IGUI_VehicleFinder_RangeAll", "Range: all known")
+                or VF.text("IGUI_VehicleFinder_RangeNear", "Range: nearby")
+            VF.safe(function() self.rangeButton:setTitle(title) end)
+        end
+        if self.burntButton then
+            local title = VF.showBurnt()
+                and VF.text("IGUI_VehicleFinder_BurntShown", "Burnt: shown")
+                or VF.text("IGUI_VehicleFinder_BurntHiddenBtn", "Burnt: hidden")
+            VF.safe(function() self.burntButton:setTitle(title) end)
+        end
+    end
+
+    function Window:onToggleRange()
+        VF.config.searchAll = not VF.config.searchAll
+        VF.saveConfig()
+        self:refreshToggles()
+        self:refreshList()
+    end
+
+    function Window:onToggleBurnt()
+        VF.setShowBurnt(not VF.showBurnt())
+        self:refreshToggles()
+        self:refreshList()
     end
 
     -- ------------------------------------------------------------- data ---
@@ -116,7 +171,7 @@ function VF.buildWindowClass()
         local scroll
         VF.safe(function() scroll = self.list:getYScroll() end)
         VF.safe(function()
-            self.entries = VF.scanVehicles()
+            self.entries = VF.searchEntries(VF.config.searchAll)
             VF.updateTracked(self.entries)
 
             local filter = string.lower(self.searchText or "")
@@ -163,21 +218,46 @@ function VF.buildWindowClass()
         end
         list:drawRectBorder(0, y, width, height, 0.10, 0.6, 0.6, 0.6)
 
+        local font = UIFont.Small
+        local manager = getTextManager()
         local x = 4
         if entry.r then
             list:drawRect(x, y + 6, 10, 10, 1, entry.r, entry.g, entry.b)
             list:drawRectBorder(x, y + 6, 10, 10, 0.8, 0.1, 0.1, 0.1)
             x = x + 16
+        elseif entry.remembered then
+            -- hollow swatch: this one is from the log, not in front of you
+            list:drawRectBorder(x, y + 6, 10, 10, 0.55, 0.6, 0.6, 0.55)
+            x = x + 16
         end
 
-        local font = UIFont.Small
-        local suffix = ""
-        if entry.modded then suffix = "  *" end
-        list:drawText(entry.name .. suffix, x, y + 3, 0.92, 0.92, 0.88, 1, font)
-
+        -- right column: distance and compass direction
         local right = string.format("%d  %s", math.floor(entry.dist), entry.dir or "")
-        local rw = getTextManager():MeasureStringX(font, right)
-        list:drawText(right, width - rw - 6, y + 3, 0.75, 0.78, 0.72, 1, font)
+        local rw = manager:MeasureStringX(font, right)
+
+        -- middle column: map coordinates, and how old the sighting is
+        local middle = string.format("%d, %d", math.floor(entry.x or 0), math.floor(entry.y or 0))
+        if entry.remembered and VF.history then
+            middle = VF.history.formatAge(entry.ageHours) .. "  " .. middle
+        end
+        local mw = manager:MeasureStringX(font, middle)
+
+        local nameSpace = width - rw - mw - x - 24
+        if nameSpace < 70 then          -- window too narrow, drop the coordinates
+            middle, mw, nameSpace = nil, 0, width - rw - x - 14
+        end
+
+        local name = entry.name
+        if entry.modded then name = name .. "  *" end
+        local dim = entry.remembered and 0.72 or 1
+        list:drawText(VF.truncate(name, font, nameSpace), x, y + 3,
+                      0.92 * dim, 0.92 * dim, 0.88 * dim, 1, font)
+        if middle then
+            list:drawText(middle, width - rw - mw - 14, y + 3,
+                          0.62, 0.66, 0.60, 1, font)
+        end
+        list:drawText(right, width - rw - 6, y + 3,
+                      0.75 * dim, 0.78 * dim, 0.72 * dim, 1, font)
 
         return y + height
     end
@@ -190,11 +270,23 @@ function VF.buildWindowClass()
         local shown = self.shown or total
         local label
         if total == 0 then
-            label = VF.text("IGUI_VehicleFinder_None", "No vehicles in the loaded area")
+            label = VF.config.searchAll
+                and VF.text("IGUI_VehicleFinder_NoneKnown", "No vehicles seen yet")
+                or VF.text("IGUI_VehicleFinder_None", "No vehicles in the loaded area")
         elseif shown == total then
             label = string.format(VF.text("IGUI_VehicleFinder_Count", "%d vehicles nearby"), total)
         else
             label = string.format(VF.text("IGUI_VehicleFinder_Filtered", "%d of %d vehicles"), shown, total)
+        end
+        if VF.config.searchAll then
+            local remembered = 0
+            for i = 1, total do
+                if self.entries[i].remembered then remembered = remembered + 1 end
+            end
+            if remembered > 0 then
+                label = label .. " - " .. string.format(
+                    VF.text("IGUI_VehicleFinder_Remembered", "%d remembered"), remembered)
+            end
         end
         if not VF.showBurnt() then
             label = label .. " - " .. VF.text("IGUI_VehicleFinder_BurntHidden", "burnt hidden")
@@ -203,8 +295,12 @@ function VF.buildWindowClass()
 
         if VF.trackedInfo then
             local info = VF.trackedInfo
-            local tracked = string.format("%s - %d %s", info.name, math.floor(info.dist),
-                                          info.dir or "")
+            local tracked = string.format("%s - %d %s - %d, %d", info.name,
+                                          math.floor(info.dist), info.dir or "",
+                                          math.floor(info.x or 0), math.floor(info.y or 0))
+            if info.remembered and VF.history then
+                tracked = tracked .. " - " .. VF.history.formatAge(info.ageHours)
+            end
             local tw = getTextManager():MeasureStringX(font, tracked)
             self:drawText(tracked, math.max(PAD, self.width - PAD - 100 - tw - 8),
                           y - 18, 0.95, 0.80, 0.30, 1, font)
