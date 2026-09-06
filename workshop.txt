@@ -1,0 +1,12 @@
+version=1
+id=
+title=Vehicle Finder
+description=Find your favourite car.
+description=
+description=A small floating car button (drag it anywhere, or hide it and use the hotkey) opens a searchable list of every vehicle loaded around you: name, colour, distance and compass direction, nearest first. Click a row to track a vehicle - the button then shows a direction pip and the distance while you walk.
+description=
+description=Works with vehicles added by other mods: names fall back to a readable name when a mod ships no translation, and modded vehicles are marked with *.
+description=
+description=Does not patch, replace or require any vanilla Lua file, so it does not fight with other UI or vehicle mods. The hotkey (default F8) is rebindable in Options > Key bindings.
+tags=Build 42;Interface;Vehicles
+visibility=public
