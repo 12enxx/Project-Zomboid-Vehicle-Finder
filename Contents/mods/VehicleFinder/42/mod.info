@@ -1,5 +1,6 @@
 name=Vehicle Finder
 id=VehicleFinder
-description=Find your favourite car. A standalone toggle button and a searchable list of every vehicle loaded around you, with distance and compass direction. Works with modded vehicles, patches nothing.
+author=12enxx
+description=Find your favourite car. A standalone toggle button and a searchable list of every vehicle loaded around you, with distance, compass direction and map coordinates. Remembers vehicles you have seen, draws them on the world map, and works with modded vehicles. Patches nothing.
 poster=poster.png
 modversion=1.0.0

@@ -1,168 +1,171 @@
 # Project Zomboid — Vehicle Finder
 
-Find your Favorite Car.
+Find your favourite car.
 
-Mod Build 42 buat nyari kendaraan di sekitar kamu: satu tombol mobil melayang
-(bisa digeser ke mana aja) yang buka daftar semua kendaraan yang ke-load di
-sekitar pemain — nama, warna, jarak, dan arah kompas, urut dari yang paling
-dekat. Klik salah satu barisnya buat "track": tombolnya bakal nunjukin titik
-arah + jarak walaupun jendelanya ditutup.
+A Build 42 mod for locating vehicles around you: one floating car button (drag
+it anywhere) opens a list of every vehicle loaded near the player — name,
+colour, distance and compass direction, nearest first. Click a row to track it:
+the button then shows a direction pip and the distance even with the window
+closed.
 
-## Kenapa tombolnya berdiri sendiri, bukan nempel ke sidebar vanilla
+Author: **12enxx**
 
-Sidebar kiri (Inventory / Health / Crafting / dll) dikontrol `MainScreen.lua`
-punya vanilla. Kalau mod nyisipin tombol ke file itu, mod-nya bakal rusak tiap
-Build 42 update — dan itu juga sumber error `require(...)` yang muncul di log
-crash sebelumnya. Jadi tombolnya dibikin berdiri sendiri dan didaftarin
-langsung ke UI manager.
+## Why the button is standalone instead of docked into the vanilla sidebar
 
-Bedanya sama versi sebelumnya: sekarang bukan cuma "gak nempel ke vanilla",
-tapi memang dirancang biar gak tabrakan sama mod lain:
+The left sidebar (Inventory / Health / Crafting / …) is driven by vanilla's
+`MainScreen.lua`. A mod that injects a button into that file breaks on every
+Build 42 update — and that is exactly where the `require(...)` errors in the
+earlier crash logs came from. So the button is standalone and registers itself
+straight with the UI manager.
 
-| Risiko | Cara mod ini menghindarinya |
+The difference from the first version: it is no longer just "not glued to
+vanilla", it is designed not to collide with other mods either.
+
+| Risk | How this mod avoids it |
 | --- | --- |
-| Patch file vanilla | Nol patch. Gak ada `require` file vanilla sama sekali; class UI baru dibikin di dalam event (`OnGameStart`), pas Lua vanilla udah kelar di-load. Ini yang bikin error `require(...)` kemarin gak akan kejadian lagi. |
-| Nabrak global mod lain | Cuma ada **satu** global: `VehicleFinder`. Semua fungsi/class ada di dalamnya. |
-| Nimpa fungsi vanilla / mod lain | Gak ada satu pun fungsi atau tabel vanilla yang di-override. Mod ini cuma `Events.*.Add` dan bikin UI sendiri. |
-| Tombol nimpa HUD mod lain | Pas pertama kali jalan, posisi tombol dicari otomatis: kandidat posisi dicek satu-satu ke `UIManager.getUI()`, yang udah kepakai dilewatin. Habis itu bisa digeser sendiri dan posisinya disimpan. |
-| Rebutan tombol F8 | F8 cuma **default**, didaftarin ke Options → Key bindings (dedup, gak nimpa binding punya mod lain), jadi tinggal diganti kalau bentrok. Hotkey juga diabaikan waktu kamu lagi ngetik di chat atau di kolom search. |
-| Mod mobil (Filibuster, Autotsar, dll) | Daftar kendaraan dibaca read-only dari `getCell():getVehicles()`. Kendaraan mod yang gak punya translation `IGUI_VehicleName...` tetap tampil dengan nama yang kebaca (`SuperTruck` → `Super Truck`) dan ditandai `*`. Warna/ID yang gak tersedia di script mod tertentu di-skip, bukan bikin error. |
-| API berubah di build berikutnya | Semua panggilan ke API game dibungkus (`VF.safe`). Kalau ada API yang hilang, fiturnya yang mati — UI-nya gak ikut crash. |
+| Patching vanilla files | Zero patches. No `require` of any vanilla file; the new UI classes are built inside an event (`OnGameStart`), after vanilla Lua has finished loading. That is why the earlier `require(...)` error cannot happen again. |
+| Clashing with another mod's globals | Exactly **one** global: `VehicleFinder`. Every function and class lives inside it. |
+| Overwriting vanilla or other mods' functions | Not a single vanilla function or table is overridden. The mod only calls `Events.*.Add` and builds its own UI. |
+| Button landing on another mod's HUD | On first run the button position is picked automatically: candidate slots are probed against `UIManager.getUI()` and occupied ones are skipped. After that you can drag it and the position is saved. |
+| Fighting over F8 | F8 is only the **default**. It is registered in Options → Key bindings (deduplicated, never overwriting another mod's binding), so you can rebind it if it clashes. The hotkey is also ignored while you are typing in chat or in the search field. |
+| Vehicle mods (Filibuster, Autotsar, …) | The vehicle list is read read-only from `getCell():getVehicles()`. Modded vehicles with no `IGUI_VehicleName...` translation still show a readable name (`SuperTruck` → `Super Truck`) and are marked with `*`. Colours or IDs a given mod script does not expose are skipped rather than raising an error. |
+| API changes in a future build | Every call into the game API is wrapped (`VF.safe`). If an API disappears, that feature goes dark — the UI does not crash with it. |
 
-## Cara pakai
+## Usage
 
-- Klik tombol mobil = sama persis kayak tekan **F8** (buka/tutup jendela).
-- **Drag** tombolnya buat mindahin; posisinya disimpan.
-- **Klik kanan** tombolnya: buka/tutup, ukuran tombol (32–56 px), reset posisi,
-  atau sembunyiin tombol (tetap bisa dibuka pakai hotkey).
-- Ketik di kolom search buat nyaring nama kendaraan.
-- Klik satu baris buat nge-track kendaraannya, "Clear target" buat berhenti.
-- Tiap baris nunjukin **koordinat peta** (`10723, 9481`) di samping jarak dan
-  arah kompas. Kalau jendelanya disempitin, koordinatnya otomatis disembunyiin
-  biar namanya nggak kepotong.
-- Dua tombol di bawah kolom search:
-  - **Range: nearby / all known** — nyalain pencarian ke kendaraan yang pernah
-    kamu lihat (lihat bagian di bawah).
-  - **Burnt: shown / hidden** — sembunyiin wreck hangus tanpa perlu bikin dunia
-    baru. Ini nimpa sandbox option-nya buat pemain ini.
+- Clicking the car button does exactly what pressing **F8** does (open/close the
+  window).
+- **Drag** the button to move it; the position is saved.
+- **Right-click** the button: open/close, button size (32–56 px), reset
+  position, or hide the button (the hotkey still opens it).
+- Type in the search field to filter by vehicle name.
+- Click a row to track that vehicle, "Clear target" to stop.
+- Every row shows the **map coordinates** (`10723, 9481`) next to the distance
+  and compass direction. If you narrow the window the coordinates are hidden
+  automatically so the name is not truncated.
+- Two toggles under the search field:
+  - **Range: nearby / all known** — extends the search to vehicles you have
+    seen before (see below).
+  - **Burnt: shown / hidden** — hides burnt wrecks without needing a new world.
+    This overrides the sandbox option for this player.
 
-## Titik di peta
+## Dots on the world map
 
-Buka peta dunia (M), kendaraan muncul sebagai titik.
+Open the world map (M) and vehicles appear as dots.
 
-**Butuh alat tulis.** Titiknya cuma muncul kalau kamu bawa **pen / pencil**
-(Pen, Pencil, RedPen, BluePen, GreenPen) — aturan yang sama persis kayak
-nyoret-nyoret peta secara manual di vanilla. Nggak bawa apa-apa, nggak ada
-titik, dan footer jendelanya nulis `map dots need a pen` biar jelas kenapa.
-Warna titiknya ngikut pen yang kamu bawa (pen warna didahulukan biar kebaca).
+**A writing tool is required.** Dots only show while you are carrying a **pen or
+pencil** (Pen, Pencil, RedPen, BluePen, GreenPen) — the same rule vanilla uses
+for annotating the map by hand. Carry nothing and there are no dots, and the
+window footer says `map dots need a pen` so the reason is visible. The dot
+colour follows the pen you carry (coloured pens win, for legibility).
 
-| Titik | Artinya |
+| Dot | Meaning |
 | --- | --- |
-| Kotak isi | lagi ke-load sekarang |
-| Kotak kosong | dari catatan, terakhir kelihatan di situ |
-| Kotak amber + nama | kendaraan yang lagi kamu track |
+| Filled square | loaded right now |
+| Hollow square | from history, last seen there |
+| Amber square + name | the vehicle you are tracking |
 
-Titik dari catatan cuma muncul kalau mode **Range: all known** nyala.
+History dots only appear while **Range: all known** is on.
 
-**Double klik** satu baris di daftar = track kendaraannya **dan** buka peta
-langsung ke posisinya.
+**Double-clicking** a row tracks the vehicle **and** opens the map centred on
+its position.
 
-Bisa dimatiin lewat klik kanan tombol mobilnya → **Dots on the world map**.
+Dots can be turned off from the car button's right-click menu → **Dots on the
+world map**.
 
-Cara kerjanya: mod naruh panel transparan sendiri di atas peta yang lagi
-kebuka, terus nggambar titiknya sendiri. Nggak ada symbol yang disuntik ke
-daftar symbol peta (yang berarti harus ngurus umur symbol-nya dan rebutan sama
-mod lain), dan nggak ada fungsi peta vanilla yang di-hook. Yang dipinjam dari
-peta cuma satu: konversi koordinat dunia ke pixel peta.
+How it works: the mod puts its own transparent panel on top of the open map and
+draws the dots itself. No symbols are injected into the map's symbol list (which
+would mean managing symbol lifetimes and competing with other mods), and no
+vanilla map function is hooked. Exactly one thing is borrowed from the map: the
+world-to-map-pixel coordinate conversion.
 
-Dua hal yang bikin versi pertamanya nggak kelihatan sama sekali:
+Two things made the first version invisible:
 
-1. Pollingnya nempel di `OnTick`. Buka peta itu **mempause game** di single
-   player, dan game yang dipause berhenti nge-tick — jadi overlay-nya nggak
-   pernah kebikin. Sekarang pakai `OnRenderTick` (per frame gambar, jalan
-   terus walau dipause).
-2. Singleton peta yang bener itu global `ISWorldMap_instance` (di-set sama
-   `ISWorldMap.ShowWorldMap`); `ISWorldMap.instance` baru keisi belakangan
-   dari prerender peta. Sekarang dicek dua-duanya.
+1. Polling was attached to `OnTick`. Opening the map **pauses the game** in
+   single player, and a paused game stops ticking — so the overlay was never
+   built. It now uses `OnRenderTick` (per drawn frame, which keeps running while
+   paused).
+2. The correct map singleton is the global `ISWorldMap_instance` (set by
+   `ISWorldMap.ShowWorldMap`); `ISWorldMap.instance` is only filled in later by
+   the map's prerender. Both are checked now.
 
-Konversi koordinatnya `worldToUIX(x, y)` — dua argumen, sesuai source vanilla.
-Bentuk satu argumen tetap didukung sebagai cadangan, dan mod nyatet mana yang
-kepakai di `console.txt`:
+The coordinate conversion is `worldToUIX(x, y)` — two arguments, matching the
+vanilla source. The single-argument form is still supported as a fallback, and
+the mod records which one it used in `console.txt`:
 
 ```
 [VehicleFinder] map projection: worldToUIX(x, y)
 ```
 
-Kalau dua-duanya nggak ada, titiknya dimatiin sendiri dan sisa mod-nya tetap
-jalan normal.
+If neither exists, dots disable themselves and the rest of the mod keeps
+working.
 
-## Advanced search: kendaraan yang pernah kelihatan
+## Advanced search: vehicles you have seen
 
-Batasnya begini: kendaraan cuma ada sebagai objek selama chunk-nya di-load
-game. Nggak ada cara bikin scan langsung "nembus" lebih jauh dari itu — Lua
-nggak bisa baca isi save buat chunk yang belum ke-load.
+The hard limit: a vehicle only exists as an object while its chunk is loaded by
+the game. There is no way to make a live scan reach past that — Lua cannot read
+save data for a chunk that has not been loaded.
 
-Yang bisa dilakukan: **nyatet**. Tiap kendaraan yang pernah masuk jangkauan
-disimpan (nama, koordinat, warna hangus atau nggak, dan kapan terakhir
-kelihatan). Pencet **Range: all known**, daftarnya jadi gabungan:
+What is possible is **remembering**. Every vehicle that has come into range is
+recorded (name, coordinates, burnt or not, and when it was last seen). Press
+**Range: all known** and the list becomes a merge of the two:
 
-| | Ditandai | Isinya |
+| | Marked by | Contains |
 | --- | --- | --- |
-| Live | swatch warna isi | kendaraan yang lagi ke-load sekarang |
-| Dari catatan | swatch kosong + umur (`2d`) + teks lebih redup | terakhir kelihatan di koordinat itu |
+| Live | filled colour swatch | vehicles loaded right now |
+| From history | hollow swatch + age (`2d`) + dimmer text | last seen at those coordinates |
 
-Jarak dan arah kompas buat entri catatan dihitung dari koordinat tersimpan,
-jadi tetap bisa di-track kayak biasa — tombol mobilnya tetap nunjukin arah
-walau kendaraannya jauh di luar jangkauan.
+Distance and compass direction for history entries are computed from the stored
+coordinates, so they can be tracked like any other row — the car button keeps
+pointing at them even when the vehicle is far out of range.
 
-Catatan teknis:
+Technical notes:
 
-- Catatannya disimpan di **ModData save-nya**, jadi nempel ke dunia itu dan
-  ikut kehapus kalau save-nya dihapus. Nggak nyampur antar save.
-- Di multiplayer, tabel ModData itu data global server, jadi di sana catatannya
-  cuma disimpan di memori selama sesi.
-- Maksimal 500 entri; yang paling lama nggak kelihatan dibuang duluan.
-- Kalau kendaraannya balik masuk jangkauan, data live yang dipakai — nggak
-  dobel.
-- Kalau mobilnya udah dipindahin orang/kamu sendiri, koordinat catatan bisa
-  basi. Umur sightingnya (`2d`, `5h`) ada di tiap baris supaya kelihatan
-  seberapa bisa dipercaya.
+- History lives in the **save's ModData**, so it belongs to that world and is
+  deleted with it. Saves never mix.
+- In multiplayer that ModData table is server-global, so there history is only
+  kept in memory for the session.
+- Capped at 500 entries; the longest-unseen ones are dropped first.
+- If a vehicle comes back into range the live data wins — no duplicates.
+- If a car has since been moved, the recorded coordinates can be stale. The
+  sighting age (`2d`, `5h`) is on every row so you can judge how much to trust
+  it.
 
-## Sandbox option: mobil hangus (burnt)
+## Sandbox option: burnt cars
 
-Mobil hangus nggak bisa dikendarai — cuma bisa dipreteli buat part. Kalau kamu
-lagi nyari mobil buat dipakai, wreck begitu cuma bikin daftarnya rame.
+Burnt cars cannot be driven — they are only good for parts. If you are looking
+for something to drive, those wrecks are just noise in the list.
 
-Ada satu sandbox option buat itu:
+There is one sandbox option for it:
 
-| Option | Default | Efek |
+| Option | Default | Effect |
 | --- | --- | --- |
-| **Vehicle Finder → List burnt vehicles** | `on` | `off` = semua wreck hangus dibuang dari hasil pencarian |
+| **Vehicle Finder → List burnt vehicles** | `on` | `off` = every burnt wreck is dropped from the results |
 
-Cara nyetelnya: waktu bikin dunia baru, pilih **Sandbox** (bukan preset
-Apocalypse/Survivor langsung) → cari halaman **Vehicle Finder** di daftar
-kategori sebelah kiri.
+To set it: when creating a new world pick **Sandbox** (not an Apocalypse /
+Survivor preset directly) → find the **Vehicle Finder** page in the category
+list on the left.
 
-Catatan penting: sandbox option itu **per-dunia**, disimpan di save-nya, dan
-dipilih waktu dunia dibuat. Jadi buat save yang udah jalan, setelannya nggak
-bisa diubah dari dalam game. Kalau kamu mau bisa ganti kapan aja tanpa bikin
-dunia baru, bilang aja — aku tambahin checkbox di jendelanya.
+Important: sandbox options are **per-world**, stored in the save and chosen at
+world creation, so an existing save cannot change them from inside the game.
+That is what the in-window **Burnt: shown / hidden** toggle is for — it
+overrides the sandbox value for this player, on any save.
 
-Deteksi hangusnya dari nama script kendaraan (`...Burnt`), jadi wreck dari mod
-mobil lain yang ikut penamaan vanilla juga kefilter. Kalau build-nya nyediain
-`isBurnt()`, itu dipakai sebagai cadangan. Waktu filternya aktif, footer
-jendelanya nulis `burnt hidden` biar jelas kenapa ada mobil yang nggak muncul.
+Burnt detection reads the vehicle script name (`...Burnt`), so wrecks from other
+vehicle mods that follow the vanilla naming are filtered too. If the build
+provides `isBurnt()`, that is used as a fallback. While the filter is active the
+window footer says `burnt hidden`, so it is clear why a car is missing.
 
-Cakupan pencarian = area yang lagi di-load game (chunk sekitar pemain). Mod ini
-gak baca file save atau peta, jadi gak ada info kendaraan yang belum pernah
-ke-load.
+Search coverage is the area the game has loaded (the chunks around the player).
+This mod does not read the save file or the map, so it knows nothing about
+vehicles that have never been loaded.
 
-## Ikon
+## Icon
 
-Ikonnya dibikin sendiri buat mod ini — pixel art mobil 32×32 dengan palet ala
-Project Zomboid (outline gelap, bodi merah bata kusam, kaca abu kebiruan, ban
-hitam rata). Sumbernya ada di `tools/generate_icons.py` (grid pixel-nya
-ditulis manual di situ), regenerate-nya:
+The icon was drawn for this mod — a 32×32 pixel-art car in a Project
+Zomboid-ish palette (dark outline, dull brick-red body, blue-grey glass, flat
+black tyres). The source is `tools/generate_icons.py` (the pixel grid is written
+out by hand there); to regenerate:
 
 ```bash
 pip install pillow
@@ -170,27 +173,27 @@ python3 tools/generate_icons.py
 ```
 
 Output: `Contents/mods/VehicleFinder/42/media/textures/VehicleFinder_Car.png`,
-`poster.png`, dan `preview.png`. Kalau texture-nya gagal ke-load karena satu
-dan lain hal, tombolnya nggambar mobil versi sederhana pakai `drawRect`, jadi
-gak pernah jadi kotak kosong.
+`poster.png` and `preview.png`. If the texture fails to load for any reason the
+button draws a simplified car with `drawRect`, so it never becomes an empty box.
 
 ## Install
 
-Yang dicopy ke game itu **folder `VehicleFinder`-nya saja**, bukan folder repo,
-bukan folder `Contents`. Tujuannya:
+What gets copied into the game is **the `VehicleFinder` folder only** — not the
+repo folder, not the `Contents` folder. Destination:
 
 ```
 Windows : %USERPROFILE%\Zomboid\mods\VehicleFinder\
 Linux   : ~/Zomboid/mods/VehicleFinder/
 ```
 
-Susunannya harus persis begini — ini struktur mod Build 42, beda dari Build 41:
+The layout has to be exactly this — it is the Build 42 mod structure, which
+differs from Build 41:
 
 ```
 Zomboid/mods/VehicleFinder/
-    common/                  <- harus ada, isinya memang kosong
+    common/                  <- must exist, and is meant to be empty
     42/
-        mod.info             <- di dalam folder 42, bukan di root
+        mod.info             <- inside the 42 folder, not at the root
         poster.png
         media/
             lua/client/VehicleFinder/*.lua
@@ -198,73 +201,74 @@ Zomboid/mods/VehicleFinder/
             textures/VehicleFinder_Car.png
 ```
 
-Dua hal yang bikin mod nggak kelihatan di menu Mods walau foldernya sudah benar:
+Two things keep a mod out of the Mods menu even when the folder is right:
 
-1. `mod.info` ditaruh di root folder mod (gaya Build 41) — di B42 dia harus di
-   dalam folder versi `42/`.
-2. Folder `common/` nggak ada — B42 nge-skip mod-nya diam-diam, tanpa error di
+1. `mod.info` placed at the mod root (Build 41 style) — in B42 it must be inside
+   the `42/` version folder.
+2. A missing `common/` folder — B42 silently skips the mod, with no error in
    `console.txt`.
 
-Terus aktifin lewat menu **Mods** di dalam game.
+Then enable it from the in-game **Mods** menu.
 
-### Kalau mod-nya masih nggak muncul di menu Mods
+### If the mod still does not show up in the Mods menu
 
-Penyebab paling sering sisanya: folder kelewat satu tingkat.
+The most common remaining cause is one folder level too many.
 
-| Salah | Kenapa |
+| Wrong | Why |
 | --- | --- |
-| `Zomboid\mods\Project-Zomboid-Vehicle-Finder-...\Contents\mods\VehicleFinder\` | folder repo/ZIP ikut kecopy |
-| `Zomboid\mods\Contents\mods\VehicleFinder\` | folder `Contents` ikut kecopy |
-| `Zomboid\mods\VehicleFinder\VehicleFinder\` | Windows bikin folder dobel waktu extract |
-| `Zomboid\Workshop\...` | itu folder buat upload Workshop, bukan mod lokal |
+| `Zomboid\mods\Project-Zomboid-Vehicle-Finder-...\Contents\mods\VehicleFinder\` | the repo/ZIP folder was copied too |
+| `Zomboid\mods\Contents\mods\VehicleFinder\` | the `Contents` folder was copied too |
+| `Zomboid\mods\VehicleFinder\VehicleFinder\` | Windows created a doubled folder on extract |
+| `Zomboid\Workshop\...` | that folder is for Workshop uploads, not local mods |
 
-Patokannya: **`...\Zomboid\mods\VehicleFinder\42\mod.info` harus ada.**
-Kalau path itu benar tapi tetap nggak kebaca, coba hapus
-`Zomboid\mods\reset-mods-42_00.txt` (file itu nyimpen daftar mod aktif dan
-kadang nyangkut), terus cek `%USERPROFILE%\Zomboid\console.txt`.
+The rule of thumb: **`...\Zomboid\mods\VehicleFinder\42\mod.info` must exist.**
+If that path is right and it is still not read, try deleting
+`Zomboid\mods\reset-mods-42_00.txt` (it caches the active mod list and sometimes
+gets stuck), then check `%USERPROFILE%\Zomboid\console.txt`.
 
-Setting UI (posisi/ukuran tombol, geometry jendela) disimpan di
-`Zomboid/VehicleFinder_settings.ini`, bukan di save game - jadi nggak ngefek ke
-multiplayer dan nggak nyampur sama ModData mod lain.
+UI settings (button position and size, window geometry) are stored in
+`Zomboid/VehicleFinder_settings.ini`, not in the save game — so they do not
+affect multiplayer and do not mix with other mods' ModData.
 
-## Struktur
+## Structure
 
 ```
 Contents/mods/VehicleFinder/
-  common/                            wajib ada buat B42, sengaja kosong
+  common/                            required by B42, intentionally empty
   42/
     mod.info
     poster.png
     media/
       lua/client/VehicleFinder/
-        VehicleFinder_01_Core.lua      namespace, settings, helper, cari posisi kosong
-        VehicleFinder_02_Vehicles.lua  scan kendaraan (aman buat kendaraan mod)
-        VehicleFinder_03_Icon.lua      loader texture + gambar fallback
-        VehicleFinder_04_Button.lua    tombol melayang (drag, klik, klik kanan)
-        VehicleFinder_05_Window.lua    jendela utama (search, list, tracking)
-        VehicleFinder_06_Main.lua      keybinding + event, satu-satunya entry point
-      VehicleFinder_07_History.lua   catatan kendaraan yang pernah kelihatan
-      VehicleFinder_08_Map.lua       titik di peta dunia
+        VehicleFinder_01_Core.lua      namespace, settings, helpers, free-slot search
+        VehicleFinder_02_Vehicles.lua  vehicle scan (safe for modded vehicles)
+        VehicleFinder_03_Icon.lua      texture loader + fallback drawing
+        VehicleFinder_04_Button.lua    floating button (drag, click, right-click)
+        VehicleFinder_05_Window.lua    main window (search, list, tracking)
+        VehicleFinder_06_Main.lua      key binding + events, the only entry point
+        VehicleFinder_07_History.lua   record of vehicles seen before
+        VehicleFinder_08_Map.lua       dots on the world map
       lua/shared/Translate/EN/IG_UI_EN.txt
       lua/shared/Translate/EN/Sandbox_EN.txt
-      sandbox-options.txt                sandbox option "List burnt vehicles"
+      sandbox-options.txt              the "List burnt vehicles" sandbox option
       textures/VehicleFinder_Car.png
-tests/                               stub API PZ + test
-tools/                               generator ikon + runner test
+tests/                               PZ API stub + tests
+tools/                               icon generator + test runner
 ```
 
-File di-prefix angka biar urutan load-nya pasti (Core duluan).
+Files are number-prefixed so the load order is deterministic (Core first).
 
-## Test
+## Tests
 
-Mod-nya bisa dijalanin di luar game: ada stub kecil dari API Project Zomboid,
-terus mod-nya digiring lewat skenario nyata (start game, hotkey, klik/drag
-tombol, search, tracking, resize, ganti resolusi, keluar ke main menu).
+The mod runs outside the game: there is a small stub of the Project Zomboid API,
+and the mod is driven through real scenarios (game start, hotkey, clicking and
+dragging the button, search, tracking, resize, resolution change, quit to main
+menu).
 
 ```bash
 pip install lupa
 python3 tools/run_tests.py
 ```
 
-Test-nya juga nge-fail kalau ada warning yang keluar diam-diam dari `VF.safe`,
-jadi API yang salah nama ketahuan tanpa harus buka game.
+The tests also fail on any warning quietly raised by `VF.safe`, so a misspelled
+API is caught without opening the game.
